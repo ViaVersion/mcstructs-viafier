@@ -1,0 +1,3 @@
+[submodule "MCStructs"]
+	path = MCStructs
+	url = https://github.com/Lenni0451/MCStructs.git

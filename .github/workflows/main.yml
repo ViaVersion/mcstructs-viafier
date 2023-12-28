@@ -1,0 +1,66 @@
+name: Publish viafied mcstructs
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  run:
+    if: ${{ github.event_name != 'pull_request' || github.repository != github.event.pull_request.head.repo.full_name }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Init submodule
+        run: git submodule update --init
+
+      - name: Check for changes
+        id: check_changes
+        run: |
+          git fetch origin && [ "$(git rev-parse HEAD)" != "$(git rev-parse origin/HEAD)" ] && echo "changes=y" >> $GITHUB_OUTPUT || true
+        working-directory: MCStructs
+
+      - name: Setup Python
+        if: steps.check_changes.outputs.changes == 'y'
+        uses: actions/setup-python@v4
+
+      - name: Update and patch mcstructs
+        if: steps.check_changes.outputs.changes == 'y'
+        run: |
+          git submodule update --remote
+          python mcstructs.py
+
+      - name: Setup Java JDK
+        if: steps.check_changes.outputs.changes == 'y'
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          check-latest: true
+
+      - name: Publish
+        if: steps.check_changes.outputs.changes == 'y'
+        env:
+          via_username: ${{ secrets.VIA_USERNAME }}
+          via_password: ${{ secrets.VIA_PASSWORD }}
+        run: ./gradlew publish
+        working-directory: MCStructs
+
+      - name: Commit changes
+        if: steps.check_changes.outputs.changes == 'y'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "automation"
+          git add .
+          git commit -am "Automated update"
+
+      - name: Push changes
+        if: steps.check_changes.outputs.changes == 'y'
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.TOKEN }}
+          branch: ${{ github.ref }}
