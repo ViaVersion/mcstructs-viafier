@@ -36,10 +36,10 @@ index 8bec86c..3525056 100644
 
      protected Tag readValue(final StringReader_v1_12 reader) throws SNbtDeserializeException {
 diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-index 86e32ec..9eb184c 100644
+index 4fdfde0..dd48c1a 100644
 --- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
 +++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-@@ -60,9 +60,9 @@ class TextComponentCodecTest {
+@@ -61,9 +61,9 @@ class TextComponentCodecTest {
 
      @Test
      void legacyItemDeserialization() throws SNbtSerializeException {
@@ -52,7 +52,7 @@ index 86e32ec..9eb184c 100644
          ATextComponent legacyComponent = new StringComponent("test")
                  .setStyle(new Style()
                          .setHoverEvent(new TextHoverEvent(HoverEventAction.SHOW_ITEM, new StringComponent(SNbtSerializer.LATEST.serialize(legacyNbt))))
-@@ -79,10 +79,10 @@ class TextComponentCodecTest {
+@@ -80,10 +80,10 @@ class TextComponentCodecTest {
      @Test
      void legacyEntityDeserialization() throws SNbtSerializeException {
          UUID randomUUID = UUID.randomUUID();
@@ -67,6 +67,51 @@ index 86e32ec..9eb184c 100644
          ATextComponent legacyComponent = new StringComponent("test")
                  .setStyle(new Style()
                          .setHoverEvent(new TextHoverEvent(HoverEventAction.SHOW_ENTITY, new StringComponent(SNbtSerializer.LATEST.serialize(legacyNbt))))
+@@ -100,19 +100,31 @@ class TextComponentCodecTest {
+
+     @Test
+     void arrayWithTag() {
+-        ListTag tags = new ListTag()
+-                .add(new CompoundTag()
+-                        .putString("translate", "test")
+-                        .addByteArray("with", (byte) 1, (byte) 2, (byte) 3))
+-                .add(new CompoundTag()
+-                        .putString("translate", "test")
+-                        .addIntArray("with", 1, 2, 3))
+-                .add(new CompoundTag()
+-                        .putString("translate", "test")
+-                        .addLongArray("with", 1, 2, 3))
+-                .add(new CompoundTag()
+-                        .putString("translate", "test")
+-                        .addList("with", 1, 2, 3));
++        CompoundTag translateWithByteArray = new CompoundTag();
++        translateWithByteArray.putString("translate", "test");
++        translateWithByteArray.put("with", new ByteArrayTag(new byte[]{1, 2, 3}));
++
++        CompoundTag translateWithIntArray = new CompoundTag();
++        translateWithIntArray.putString("translate", "test");
++        translateWithIntArray.put("with", new IntArrayTag(new int[]{1, 2, 3}));
++
++        CompoundTag translateWithLongArray = new CompoundTag();
++        translateWithLongArray.putString("translate", "test");
++        translateWithLongArray.put("with", new LongArrayTag(new long[]{1, 2, 3}));
++
++        CompoundTag translateWithList = new CompoundTag();
++        ListTag numberList = new ListTag();
++        numberList.add(new IntTag(1));
++        numberList.add(new IntTag(2));
++        numberList.add(new IntTag(3));
++        translateWithList.putString("translate", "test");
++        translateWithList.put("with", numberList);
++
++        ListTag tags = new ListTag();
++        tags.add(translateWithByteArray);
++        tags.add(translateWithIntArray);
++        tags.add(translateWithLongArray);
++        tags.add(translateWithList);
+         ATextComponent component = new TranslationComponent("test", (byte) 1, (byte) 2, (byte) 3)
+                 .append(new TranslationComponent("test", 1, 2, 3))
+                 .append(new TranslationComponent("test", 1L, 2L, 3L))
 diff --git a/build.gradle b/build.gradle
 index a8c4682..6929dc4 100644
 --- a/build.gradle

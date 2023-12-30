@@ -2,8 +2,9 @@ import os
 import re
 import subprocess
 
-via_nbt_version = '3.4.0'
+via_nbt_version = '3.5.0'
 
+# All of this would work better with bytecode rewriting, but here we go
 replacements = {
     # Gradle build script changes (less chance of running into conflicts by putting it here instead of the patch)
     'name = "lenni0451"': 'name = "viaversion"',
@@ -88,6 +89,12 @@ def deep(path):
             handle_file(p)
 
 
+def to_camel_case(s):
+    words = s.split('_')
+    camel_case_words = [words[0].capitalize()] + [word.capitalize() for word in words[1:]]
+    return ''.join(camel_case_words)
+
+
 def replace_get_value(content, obj):
     # First apply nullable replacements with the generic replacement, THEN the rest
     content = replace_nullable_get(obj, 'Compound', '', 'null', content)
@@ -104,8 +111,13 @@ def replace_get_value(content, obj):
     content = replace_nonnull_get(obj, 'LongArray', '.getValue()', 'new long[0]', content)
 
     # Booleans are stored as byte tags
-    content = re.sub(r'tag\.getBoolean\(([^)]+)\)',
+    content = re.sub(fr'{obj}\.getBoolean\(([^)]+)\)',
                      fr'({obj}.get(\1) instanceof ByteTag ? ((ByteTag) {obj}.get(\1)).asBoolean() : false)',
+                     content)
+
+    # something.get(y).asXTag() -> ((XTag) something.get(y))
+    content = re.sub(fr'{obj}\.get\(([^)]+)\).as(\w+Tag)\(\)',
+                     fr'((\2) {obj}.get(\1))',
                      content)
 
     numeric_types = {'Byte', 'Short', 'Int', 'Long', 'Float', 'Double'}
@@ -153,15 +165,15 @@ def handle_file(path):
 
         # tag.contains(s, Tag.X) -> tag.get(s) instanceof XTag
         changed_content = re.sub(r'(\w+)\.contains\(([^,)]+), Tag\.(\w+)\)',
-                                 lambda m: f'({m.group(1)}.get({m.group(2)}) instanceof {m.group(3).capitalize()}Tag)',
+                                 lambda m: f'({m.group(1)}.get({m.group(2)}) instanceof {to_camel_case(m.group(3))}Tag)',
                                  changed_content)
         changed_content = re.sub(r'\.contains\(([^,)]+), Tag\.(\w+)\)',
-                                 lambda m: f'.get({m.group(1)}) instanceof {m.group(2).capitalize()}Tag',
+                                 lambda m: f'.get({m.group(1)}) instanceof {to_camel_case(m.group(2))}Tag',
                                  changed_content)
 
         # Tag.X.equals(tagType) -> tagType instance XTag
         changed_content = re.sub(r'Tag\.(\w+).equals\((\w+)\)',
-                                 lambda m: f'({m.group(2)} instanceof {m.group(1).capitalize()}Tag)',
+                                 lambda m: f'({m.group(2)} instanceof {to_camel_case(m.group(1))}Tag)',
                                  changed_content)
 
         # tag.getX -> cast to tag with default value
