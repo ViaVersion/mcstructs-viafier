@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 
-via_nbt_version = '3.5.0'
+via_nbt_version = '4.4.0'
 
 # All of this would work better with bytecode rewriting, but here we go
 replacements = {
@@ -16,11 +16,6 @@ replacements = {
     'import net.lenni0451.mcstructs.nbt.': 'import com.github.steveice10.opennbt.tag.builtin.',
     'INbtTag': 'Tag',
     'INbtNumber': 'NumberTag',
-    'ListTag<>': 'ListTag',
-    'ListTag<Tag>': 'ListTag',
-    'ListTag<CompoundTag>': 'ListTag',
-    'ListTag<T>': 'ListTag',
-    'ListTag<?>': 'ListTag',
     'tag.getNbtType()': 'tag',
     'ArrayTag.getLength()': 'ArrayTag.length()',
     'ArrayTag.get(': 'ArrayTag.getValue(',
@@ -104,7 +99,7 @@ def replace_get_value(content, obj):
                      content)
 
     content = replace_nonnull_get(obj, 'Compound', '', 'new CompoundTag()', content)
-    content = replace_nonnull_get(obj, 'List', '', 'new ListTag()', content)
+    content = replace_nonnull_get(obj, 'List', '', 'new ListTag<>()', content)
     content = replace_nonnull_get(obj, 'String', '.getValue()', '""', content)
     content = replace_nonnull_get(obj, 'ByteArray', '.getValue()', 'new byte[0]', content)
     content = replace_nonnull_get(obj, 'IntArray', '.getValue()', 'new int[0]', content)
