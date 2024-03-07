@@ -1,0 +1,51 @@
+name: Manually publish
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Init submodule
+        run: git submodule update --init
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+
+      - name: Update and patch mcstructs
+        run: |
+          git submodule update --remote
+          python mcstructs.py
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: 17
+          check-latest: true
+
+      - name: Publish
+        env:
+          via_username: ${{ secrets.VIA_USERNAME }}
+          via_password: ${{ secrets.VIA_PASSWORD }}
+        run: ./gradlew publish
+        working-directory: MCStructs
+
+      - name: Commit changes
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "automation"
+          git add .
+          git commit -am "Automated update"
+
+      - name: Push changes
+        uses: ad-m/github-push-action@master
+        with:
+          github_token: ${{ secrets.TOKEN }}
+          branch: ${{ github.ref }}
