@@ -152,20 +152,16 @@ index 62daf4c..382f00b 100644
          publications {
              maven(MavenPublication) {
 diff --git a/settings.gradle b/settings.gradle
-index 678ff0b..dd6c9cc 100644
+index 8782dd6..dd6c9cc 100644
 --- a/settings.gradle
 +++ b/settings.gradle
-@@ -7,13 +7,6 @@ pluginManagement {
+@@ -7,9 +7,6 @@ pluginManagement {
  
  rootProject.name = "MCStructs"
  
 -include(":MCStructs-all")
 -include(":MCStructs-data")
--include(":MCStructs-enchantments")
  include(":MCStructs-core")
--include(":MCStructs-inventory")
--include(":MCStructs-items")
 -include(":MCStructs-nbt")
--include(":MCStructs-recipes")
  include(":MCStructs-snbt")
  include(":MCStructs-text")
