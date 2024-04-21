@@ -35,8 +35,159 @@ index 851d33c..2a55603 100644
      }
  
      protected Tag readValue(final StringReader_v1_12 reader) throws SNbtDeserializeException {
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
+index fd93efd..8125838 100644
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
+@@ -117,10 +117,10 @@ public class EntityHoverEvent extends AHoverEvent {
+     @Override
+     public String toString() {
+         return ToString.of(this)
+-                .put("action", this.action)
+-                .put("entityType", this.entityType)
+-                .put("uuid", this.uuid)
+-                .put("name", this.name, Objects::nonNull)
++                .add("action", this.action)
++                .add("entityType", this.entityType)
++                .add("uuid", this.uuid)
++                .add("name", this.name, Objects::nonNull)
+                 .toString();
+     }
+ 
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
+index 3fed9a3..7d9f356 100644
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
+@@ -119,10 +119,10 @@ public class ItemHoverEvent extends AHoverEvent {
+     @Override
+     public String toString() {
+         return ToString.of(this)
+-                .put("action", this.action)
+-                .put("item", this.item)
+-                .put("count", this.count, count -> count != 1)
+-                .put("nbt", this.nbt, Objects::nonNull)
++                .add("action", this.action)
++                .add("item", this.item)
++                .add("count", this.count, count -> count != 1)
++                .add("nbt", this.nbt, Objects::nonNull)
+                 .toString();
+     }
+ 
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
+index 4ca4cc8..618d52a 100644
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
+@@ -22,23 +22,17 @@ public class JsonNbtConverter {
+      * @return The converted json element
+      */
+     public static JsonElement toJson(final Tag tag) {
+-        switch (tag) {
+-            case END:
++        if (tag == null) {
+                 return null;
+-            case BYTE:
+-            case SHORT:
+-            case INT:
+-            case LONG:
+-            case FLOAT:
+-            case DOUBLE:
++        } else if (tag instanceof NumberTag) {
+                 return new JsonPrimitive(((NumberTag) tag).getValue());
+-            case BYTE_ARRAY:
++        } else if (tag instanceof ByteArrayTag) {
+                 JsonArray byteArray = new JsonArray();
+                 for (byte b : ((ByteArrayTag) tag).getValue()) byteArray.add(b);
+                 return byteArray;
+-            case STRING:
++        } else if (tag instanceof StringTag) {
+                 return new JsonPrimitive(((StringTag) tag).getValue());
+-            case LIST:
++        } else if (tag instanceof ListTag) {
+                 JsonArray list = new JsonArray();
+                 ListTag<Tag> listTag = ((ListTag) tag);
+                 for (Tag tagInList : listTag.getValue()) {
+@@ -52,19 +46,19 @@ public class JsonNbtConverter {
+                     list.add(toJson(tagInList));
+                 }
+                 return list;
+-            case COMPOUND:
++        } else if (tag instanceof CompoundTag) {
+                 JsonObject compound = new JsonObject();
+-                for (Map.Entry<String, Tag> entry : ((CompoundTag) tag).getValue().entrySet()) compound.put(entry.getKey(), toJson(entry.getValue()));
++                for (Map.Entry<String, Tag> entry : ((CompoundTag) tag).getValue().entrySet()) compound.add(entry.getKey(), toJson(entry.getValue()));
+                 return compound;
+-            case INT_ARRAY:
++        } else if (tag instanceof IntArrayTag) {
+                 JsonArray intArray = new JsonArray();
+                 for (int i : ((IntArrayTag) tag).getValue()) intArray.add(i);
+                 return intArray;
+-            case LONG_ARRAY:
++        } else if (tag instanceof LongArrayTag) {
+                 JsonArray longArray = new JsonArray();
+                 for (long l : ((LongArrayTag) tag).getValue()) longArray.add(l);
+                 return longArray;
+-            default:
++        } else {
+                 throw new IllegalArgumentException("Unknown Nbt type: " + tag);
+         }
+     }
+@@ -85,31 +79,37 @@ public class JsonNbtConverter {
+             JsonArray array = element.getAsJsonArray();
+             List<Tag> nbtTags = new ArrayList<>();
+             Tag listType = null;
++            boolean mixedList = false;
+             for (JsonElement arrayElement : array) {
+                 Tag tag = toNbt(arrayElement);
+                 nbtTags.add(tag);
+                 listType = getListType(listType, tag);
++                if (listType == null) mixedList = true;
+             }
+             if (listType == null) {
+                 return new ListTag<>();
+-            } else if (listType == Tag.END) { //Mixed list
++            } else if (mixedList) { //Mixed list
+                 ListTag<CompoundTag> list = new ListTag<>();
+                 for (Tag tag : nbtTags) {
+                     if (tag instanceof CompoundTag) list.add(((CompoundTag) tag));
+-                    else list.add(new CompoundTag().put("", tag));
++                    else {
++                        final CompoundTag entries = new CompoundTag();
++                        entries.put("", tag);
++                        list.add(entries);
++                    }
+                 }
+                 return list;
+-            } else if (listType == Tag.BYTE) {
++            } else if (listType instanceof ByteTag) {
+                 byte[] bytes = new byte[nbtTags.size()];
+-                for (int i = 0; i < nbtTags.size(); i++) bytes[i] = nbtTags.get(i).asByteTag().byteValue();
++                for (int i = 0; i < nbtTags.size(); i++) bytes[i] = ((NumberTag) nbtTags.get(i)).asByte();
+                 return new ByteArrayTag(bytes);
+-            } else if (listType == Tag.INT) {
++            } else if (listType instanceof IntTag) {
+                 int[] ints = new int[nbtTags.size()];
+-                for (int i = 0; i < nbtTags.size(); i++) ints[i] = nbtTags.get(i).asIntTag().intValue();
++                for (int i = 0; i < nbtTags.size(); i++) ints[i] = ((NumberTag) nbtTags.get(i)).asInt();
+                 return new IntArrayTag(ints);
+-            } else if (listType == Tag.LONG) {
++            } else if (listType instanceof LongTag) {
+                 long[] longs = new long[nbtTags.size()];
+-                for (int i = 0; i < nbtTags.size(); i++) longs[i] = nbtTags.get(i).asIntTag().intValue();
++                for (int i = 0; i < nbtTags.size(); i++) longs[i] = ((NumberTag) nbtTags.get(i)).asLong();
+                 return new LongArrayTag(longs);
+             } else {
+                 return new ListTag<>(nbtTags);
+@@ -143,7 +143,7 @@ public class JsonNbtConverter {
+ 
+     private static Tag getListType(final Tag current, final Tag tag) {
+         if (current == null) return tag;
+-        if (current != tag) return Tag.END; //Placeholder for mixed lists
++        if (current != tag) return null; //Placeholder for mixed lists
+         return current;
+     }
+ 
 diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-index b252411..80d3a81 100644
+index 503878a..00572d9 100644
 --- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
 +++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
 @@ -61,9 +61,9 @@ class TextComponentCodecTest {

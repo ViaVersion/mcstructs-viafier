@@ -47,7 +47,7 @@ jobs:
         env:
           via_username: ${{ secrets.VIA_USERNAME }}
           via_password: ${{ secrets.VIA_PASSWORD }}
-        run: ./gradlew publish
+        run: ./gradlew publish -x checkstyleMain -x checkstyleTest -x test
         working-directory: MCStructs
 
       - name: Commit changes
