@@ -74,24 +74,23 @@ index 3fed9a3..7d9f356 100644
      }
  
 diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
-index 4ca4cc8..618d52a 100644
+index 8ef3051..9af7730 100644
 --- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
 +++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
-@@ -22,23 +22,17 @@ public class JsonNbtConverter {
-      * @return The converted json element
-      */
-     public static JsonElement toJson(final Tag tag) {
+@@ -25,23 +25,15 @@ public class JsonNbtConverter {
+     @Nullable
+     public static JsonElement toJson(@Nullable final Tag tag) {
+         if (tag == null) return null;
 -        switch (tag) {
 -            case END:
-+        if (tag == null) {
-                 return null;
+-                return null;
 -            case BYTE:
 -            case SHORT:
 -            case INT:
 -            case LONG:
 -            case FLOAT:
 -            case DOUBLE:
-+        } else if (tag instanceof NumberTag) {
++        if (tag instanceof NumberTag) {
                  return new JsonPrimitive(((NumberTag) tag).getValue());
 -            case BYTE_ARRAY:
 +        } else if (tag instanceof ByteArrayTag) {
@@ -102,11 +101,11 @@ index 4ca4cc8..618d52a 100644
 +        } else if (tag instanceof StringTag) {
                  return new JsonPrimitive(((StringTag) tag).getValue());
 -            case LIST:
-+        } else if (tag instanceof ListTag) {
++        } else if (tag instanceof ListTag<?>) {
                  JsonArray list = new JsonArray();
                  ListTag<Tag> listTag = ((ListTag) tag);
                  for (Tag tagInList : listTag.getValue()) {
-@@ -52,19 +46,19 @@ public class JsonNbtConverter {
+@@ -55,19 +47,19 @@ public class JsonNbtConverter {
                      list.add(toJson(tagInList));
                  }
                  return list;
@@ -131,7 +130,7 @@ index 4ca4cc8..618d52a 100644
                  throw new IllegalArgumentException("Unknown Nbt type: " + tag);
          }
      }
-@@ -85,31 +79,37 @@ public class JsonNbtConverter {
+@@ -90,31 +82,37 @@ public class JsonNbtConverter {
              JsonArray array = element.getAsJsonArray();
              List<Tag> nbtTags = new ArrayList<>();
              Tag listType = null;
@@ -177,7 +176,7 @@ index 4ca4cc8..618d52a 100644
                  return new LongArrayTag(longs);
              } else {
                  return new ListTag<>(nbtTags);
-@@ -143,7 +143,7 @@ public class JsonNbtConverter {
+@@ -148,7 +146,7 @@ public class JsonNbtConverter {
  
      private static Tag getListType(final Tag current, final Tag tag) {
          if (current == null) return tag;
