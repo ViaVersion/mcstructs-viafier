@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 
-via_nbt_version = '4.4.0'
+via_nbt_version = '5.0.0'
 
 # All of this would work better with bytecode rewriting, but here we go
 replacements = {
@@ -12,17 +12,16 @@ replacements = {
     'api project(":MCStructs-nbt")': f'api "com.viaversion:nbt:{via_nbt_version}"',
     'maven_group=net.lenni0451.mcstructs': 'maven_group=com.viaversion.mcstructs',
     # Code changes
-    'import net.lenni0451.mcstructs.nbt.tags.': 'import com.github.steveice10.opennbt.tag.builtin.',
-    'import net.lenni0451.mcstructs.nbt.': 'import com.github.steveice10.opennbt.tag.builtin.',
+    'import net.lenni0451.mcstructs.nbt.tags.': 'import com.viaversion.nbt.tag.',
+    'import net.lenni0451.mcstructs.nbt.': 'import com.viaversion.nbt.tag.',
     'INbtTag': 'Tag',
     'INbtNumber': 'NumberTag',
     'tag.getNbtType()': 'tag',
     'ArrayTag.getLength()': 'ArrayTag.length()',
-    'ArrayTag.get(': 'ArrayTag.getValue(',
     'type.name()': 'type.getClass().getSimpleName()',
     'NbtType': 'Tag',
-    'import com.github.steveice10.opennbt.tag.builtin.Tag': 'import com.github.steveice10.opennbt.tag.builtin.*',
-    'import com.github.steveice10.opennbt.tag.builtin.CompoundTag': 'import com.github.steveice10.opennbt.tag.builtin.*',
+    'import com.viaversion.nbt.tag.Tag': 'import com.viaversion.nbt.tag.*',
+    'import com.viaversion.nbt.tag.CompoundTag': 'import com.viaversion.nbt.tag.*',
     # A special one
     '            if (!list.canAdd(tag)) throw new SNbtDeserializeException("Unable to insert " + tag.getClass().getSimpleName() + " into ListTag of type " + list.getType().name());': ''
 }
@@ -40,7 +39,7 @@ extra_replacements = {
     '.addAll(': '.putAll(',
     '.getTag().name()': '.getClass()',
     'tag.name()': 'tag.getClass()',
-    'list.getType().isNumber()': 'list.getElementType().isAssignableFrom(com.github.steveice10.opennbt.tag.builtin.NumberTag.class)',
+    'list.getType().isNumber()': 'list.getElementType().isAssignableFrom(com.viaversion.nbt.tag.NumberTag.class)',
     'values.get(i).asNumberTag().intValue()': '((NumberTag) values.get(i)).asInt()',
     'this.styleSerializer.serialize(object.getStyle()).asCompoundTag()': '(CompoundTag) this.styleSerializer.serialize(object.getStyle())',
     'JsonNbtConverter.toNbt(json).asCompoundTag()': '((CompoundTag) JsonNbtConverter.toNbt(json))',

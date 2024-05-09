@@ -14,21 +14,21 @@ index 851d33c..2a55603 100644
 +            final ListTag<ByteTag> tags = this.readPrimitiveList(reader, ByteTag.class, ByteArrayTag.class);
 +            final byte[] array = new byte[tags.size()];
 +            for (int i = 0; i < tags.size(); i++) {
-+                array[i] = tags.get(i).value();
++                array[i] = tags.get(i).asByte();
 +            }
 +            return new ByteArrayTag(array);
 +        } else if (c == 'L') {
 +            final ListTag<LongTag> tags = this.readPrimitiveList(reader, LongTag.class, LongArrayTag.class);
 +            final long[] array = new long[tags.size()];
 +            for (int i = 0; i < tags.size(); i++) {
-+                array[i] = tags.get(i).value();
++                array[i] = tags.get(i).asLong();
 +            }
 +            return new LongArrayTag(array);
 +        } else if (c == 'I') {
 +            final ListTag<IntTag> tags = this.readPrimitiveList(reader, IntTag.class, IntArrayTag.class);
 +            final int[] array = new int[tags.size()];
 +            for (int i = 0; i < tags.size(); i++) {
-+                array[i] = tags.get(i).value();
++                array[i] = tags.get(i).asInt();
 +            }
 +            return new IntArrayTag(array);
 +        } else throw new SNbtDeserializeException("Invalid array type '" + c + "' found");
