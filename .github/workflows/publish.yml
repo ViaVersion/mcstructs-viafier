@@ -16,7 +16,7 @@ jobs:
         run: git submodule update --init
 
       - name: Setup Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
 
       - name: Update and patch mcstructs
         run: |
@@ -24,7 +24,7 @@ jobs:
           python mcstructs.py
 
       - name: Setup Java JDK
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: 17

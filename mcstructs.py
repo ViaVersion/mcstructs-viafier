@@ -2,7 +2,8 @@ import os
 import re
 import subprocess
 
-via_nbt_version = '5.0.0'
+via_nbt_version = '5.0.0-SNAPSHOT'
+version_prefix = '5'
 
 # All of this would work better with bytecode rewriting, but here we go
 replacements = {
@@ -11,6 +12,7 @@ replacements = {
     'url = "https://maven.lenni0451.net/everything"': 'url = "https://repo.viaversion.com/"',
     'api project(":MCStructs-nbt")': f'api "com.viaversion:nbt:{via_nbt_version}"',
     'maven_group=net.lenni0451.mcstructs': 'maven_group=com.viaversion.mcstructs',
+    'maven_version=': f'maven_version={version_prefix}-',
     # Code changes
     'import net.lenni0451.mcstructs.nbt.tags.': 'import com.viaversion.nbt.tag.',
     'import net.lenni0451.mcstructs.nbt.': 'import com.viaversion.nbt.tag.',
