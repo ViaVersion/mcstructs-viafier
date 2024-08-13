@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 
-via_nbt_version = '5.0.0-SNAPSHOT'
+via_nbt_version = '5.0.0'
 version_prefix = '5'
 
 # All of this would work better with bytecode rewriting, but here we go
