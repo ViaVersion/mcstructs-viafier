@@ -181,7 +181,7 @@ index 8ef3051..9af7730 100644
      private static Tag getListType(final Tag current, final Tag tag) {
          if (current == null) return tag;
 -        if (current != tag) return Tag.END; //Placeholder for mixed lists
-+        if (current != tag) return null; //Placeholder for mixed lists
++        if (tag == null || current.getClass() != tag.getClass()) return null; //Placeholder for mixed lists
          return current;
      }
  
