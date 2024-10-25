@@ -1,5 +1,5 @@
 diff --git a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-index 851d33c..2a55603 100644
+index 60ad052..1b98e7a 100644
 --- a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
 +++ b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
 @@ -95,10 +95,28 @@ public class SNbtDeserializer_v1_12 implements ISNbtDeserializer<CompoundTag> {
@@ -35,8 +35,121 @@ index 851d33c..2a55603 100644
      }
  
      protected Tag readValue(final StringReader_v1_12 reader) throws SNbtDeserializeException {
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java
+index a60fc64..e839e9b 100644
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java
+@@ -32,6 +32,13 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
+ 
+     private final List<ATextComponent> siblings = new ArrayList<>();
+     private Style style = new Style();
++    private int level = 1;
++    private void setLevel(int level) {
++        this.level = Math.max(this.level, level);
++        if (this.level > 512) {
++            throw new IllegalArgumentException("Too deep");
++        }
++    }
+ 
+     /**
+      * Append a string to this component.
+@@ -52,6 +59,7 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
+      */
+     public ATextComponent append(final ATextComponent component) {
+         this.siblings.add(component);
++        component.setLevel(this.level + 1);
+         return this;
+     }
+ 
+@@ -63,6 +71,7 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
+      */
+     public ATextComponent append(final ATextComponent... components) {
+         this.siblings.addAll(Arrays.asList(components));
++        for (ATextComponent component : components) component.setLevel(this.level + 1);
+         return this;
+     }
+ 
+@@ -177,24 +186,28 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
+         return out.toString();
+     }
+ 
+-    /**
+-     * @return A legacy formatted string representation of this component
+-     */
+-    public String asLegacyFormatString() {
+-        StringBuilder out = new StringBuilder();
+-        if (this.style.getColor() != null && this.style.getColor().isFormattingColor()) out.append(COLOR_CHAR).append(this.style.getColor().getCode());
+-        else out.append("§r");
+-        if (this.style.isObfuscated()) out.append(COLOR_CHAR).append(TextFormatting.OBFUSCATED.getCode());
+-        if (this.style.isBold()) out.append(COLOR_CHAR).append(TextFormatting.BOLD.getCode());
+-        if (this.style.isStrikethrough()) out.append(COLOR_CHAR).append(TextFormatting.STRIKETHROUGH.getCode());
+-        if (this.style.isUnderlined()) out.append(COLOR_CHAR).append(TextFormatting.UNDERLINE.getCode());
+-        if (this.style.isItalic()) out.append(COLOR_CHAR).append(TextFormatting.ITALIC.getCode());
+-        out.append(this.asSingleString());
++    public void visit(final Consumer<String> consumer) {
++        if (this.style.getColor() != null && this.style.getColor().isFormattingColor()) consumer.accept(Character.toString(COLOR_CHAR) + this.style.getColor().getCode());
++        else consumer.accept("§r");
++        if (this.style.isObfuscated()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.OBFUSCATED.getCode());
++        if (this.style.isBold()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.BOLD.getCode());
++        if (this.style.isStrikethrough()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.STRIKETHROUGH.getCode());
++        if (this.style.isUnderlined()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.UNDERLINE.getCode());
++        if (this.style.isItalic()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.ITALIC.getCode());
++        consumer.accept(this.asSingleString());
+         for (ATextComponent sibling : this.siblings) {
+             ATextComponent copy = sibling.copy();
+             copy.getStyle().setParent(this.style);
+-            out.append(copy.asLegacyFormatString());
++            copy.visit(consumer);
+         }
++    }
++    /**
++     * @return A legacy formatted string representation of this component
++     */
++    public final String asLegacyFormatString() {
++        // Improve traversal performance
++        StringBuilder out = new StringBuilder();
++        this.visit(out::append);
+         return out.toString();
+     }
+ 
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
+index 91b176d..8158521 100644
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
+@@ -142,8 +142,29 @@ public class TranslationComponent extends ATextComponent {
+     }
+ 
+     @Override
+-    public String asLegacyFormatString() {
+-        return this.resolveIntoComponents().asLegacyFormatString();
++    public void visit(final java.util.function.Consumer<String> consumer) {
++        if (consumer instanceof TranslatableContentConsumer) {
++            this.resolveIntoComponents().visit(consumer);
++        } else {
++            this.resolveIntoComponents().visit(new TranslatableContentConsumer(consumer));
++        }
++    }
++    private static final class TranslatableContentConsumer implements java.util.function.Consumer<String> {
++        private static final IllegalArgumentException EX = new IllegalArgumentException("Too long");
++        private final java.util.function.Consumer<String> runnable;
++        private int visited;
++
++        private TranslatableContentConsumer(final java.util.function.Consumer<String> runnable) {
++            this.runnable = runnable;
++        }
++
++        @Override
++        public void accept(final String s) {
++            if (visited++ > 32) {
++                throw EX;
++            }
++            this.runnable.accept(s);
++        }
+     }
+ 
+     @Override
 diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
-index fd93efd..8125838 100644
+index ed2644d..55c6e02 100644
 --- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
 +++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
 @@ -117,10 +117,10 @@ public class EntityHoverEvent extends AHoverEvent {
@@ -55,7 +168,7 @@ index fd93efd..8125838 100644
      }
  
 diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
-index 3fed9a3..7d9f356 100644
+index 2812bd2..aea17e6 100644
 --- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
 +++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
 @@ -119,10 +119,10 @@ public class ItemHoverEvent extends AHoverEvent {
@@ -74,7 +187,7 @@ index 3fed9a3..7d9f356 100644
      }
  
 diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
-index 8ef3051..9af7730 100644
+index 8bd6503..e512af7 100644
 --- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
 +++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
 @@ -25,23 +25,15 @@ public class JsonNbtConverter {
@@ -186,7 +299,7 @@ index 8ef3051..9af7730 100644
      }
  
 diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-index 503878a..00572d9 100644
+index cb0628a..18f5d2e 100644
 --- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
 +++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
 @@ -61,9 +61,9 @@ class TextComponentCodecTest {
@@ -263,10 +376,10 @@ index 503878a..00572d9 100644
                  .append(new TranslationComponent("test", 1, 2, 3))
                  .append(new TranslationComponent("test", 1L, 2L, 3L))
 diff --git a/build.gradle b/build.gradle
-index 62daf4c..382f00b 100644
+index 2178d6b..6b8f7e1 100644
 --- a/build.gradle
 +++ b/build.gradle
-@@ -49,17 +49,17 @@ subprojects {
+@@ -60,17 +60,17 @@ subprojects {
      publishing {
          repositories {
              maven {
@@ -292,7 +405,7 @@ index 62daf4c..382f00b 100644
                  name = "ossrh"
                  def releasesUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
                  def snapshotsUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-@@ -69,7 +69,7 @@ subprojects {
+@@ -80,7 +80,7 @@ subprojects {
                  authentication {
                      basic(BasicAuthentication)
                  }
