@@ -40,9 +40,11 @@ extra_replacements = {
     '.addCompound(': '.put(',
     '.addAll(': '.putAll(',
     '.getTag().name()': '.getClass()',
+    '.intValue()': '.asInt()',
     'tag.name()': 'tag.getClass()',
+    'super.serialize(object).asCompoundTag()': '((CompoundTag) super.serialize(object))',
     'list.getType().isNumber()': 'list.getElementType().isAssignableFrom(com.viaversion.nbt.tag.NumberTag.class)',
-    'values.get(i).asNumberTag().intValue()': '((NumberTag) values.get(i)).asInt()',
+    'values.get(i).asNumberTag().asInt()': '((NumberTag) values.get(i)).asInt()',
     'this.styleSerializer.serialize(object.getStyle()).asCompoundTag()': '(CompoundTag) this.styleSerializer.serialize(object.getStyle())',
     'JsonNbtConverter.toNbt(json).asCompoundTag()': '((CompoundTag) JsonNbtConverter.toNbt(json))',
     'Tag.COMPOUND.equals(list.getType())': 'CompoundTag.class == list.getElementType()',
@@ -157,9 +159,13 @@ def handle_file(path):
             changed_content = changed_content.replace('.add("', '.put("')
 
         # tag.isXTag() -> (tag instanceof XTag)
+        # Special case ArrayTag
+        changed_content = re.sub(r'(\w+)\.isArrayTag\(\)', r'(\1 instanceof NumberArrayTag)', changed_content)
         changed_content = re.sub(r'(\w+)\.is(\w+Tag)\(\)', r'(\1 instanceof \2)', changed_content)
 
         # asXTag() -> cast
+        # Deal with the base ArrayTag separately
+        changed_content = re.sub(r'(\w+)\.asArrayTag\(\)', r'((NumberArrayTag) \1)', changed_content)
         changed_content = re.sub(r'(\w+)\.as(\w+Tag)\(\)', r'((\2) \1)', changed_content)
         changed_content = re.sub(r'tags.get\(i\)\.as(\w+Tag)\(\)', r'((\1) tags.get(i))', changed_content)
 

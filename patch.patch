@@ -278,13 +278,13 @@ index 8bd6503..e512af7 100644
 -            } else if (listType == Tag.INT) {
 +            } else if (listType instanceof IntTag) {
                  int[] ints = new int[nbtTags.size()];
--                for (int i = 0; i < nbtTags.size(); i++) ints[i] = nbtTags.get(i).asIntTag().intValue();
+-                for (int i = 0; i < nbtTags.size(); i++) ints[i] = nbtTags.get(i).asIntTag().asInt();
 +                for (int i = 0; i < nbtTags.size(); i++) ints[i] = ((NumberTag) nbtTags.get(i)).asInt();
                  return new IntArrayTag(ints);
 -            } else if (listType == Tag.LONG) {
 +            } else if (listType instanceof LongTag) {
                  long[] longs = new long[nbtTags.size()];
--                for (int i = 0; i < nbtTags.size(); i++) longs[i] = nbtTags.get(i).asIntTag().intValue();
+-                for (int i = 0; i < nbtTags.size(); i++) longs[i] = nbtTags.get(i).asIntTag().asInt();
 +                for (int i = 0; i < nbtTags.size(); i++) longs[i] = ((NumberTag) nbtTags.get(i)).asLong();
                  return new LongArrayTag(longs);
              } else {
