@@ -16,8 +16,8 @@ replacements = {
     # Code changes
     'import net.lenni0451.mcstructs.nbt.tags.': 'import com.viaversion.nbt.tag.',
     'import net.lenni0451.mcstructs.nbt.': 'import com.viaversion.nbt.tag.',
-    'INbtTag': 'Tag',
-    'INbtNumber': 'NumberTag',
+    'NbtTag': 'Tag',
+    'NbtNumber': 'NumberTag',
     'tag.getNbtType()': 'tag',
     'ArrayTag.getLength()': 'ArrayTag.length()',
     'type.name()': 'type.getClass().getSimpleName()',

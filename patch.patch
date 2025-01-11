@@ -1,47 +1,9 @@
-diff --git a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-index 60ad052..1b98e7a 100644
---- a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-+++ b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-@@ -95,10 +95,28 @@ public class SNbtDeserializer_v1_12 implements ISNbtDeserializer<CompoundTag> {
-         reader.read();
-         reader.skipWhitespaces();
-         if (!reader.canRead()) throw this.makeException(reader, "Expected value");
--        else if (c == 'B') return new ByteArrayTag(this.readPrimitiveList(reader, ByteTag.class, ByteArrayTag.class));
--        else if (c == 'L') return new LongArrayTag(this.readPrimitiveList(reader, LongTag.class, LongArrayTag.class));
--        else if (c == 'I') return new IntArrayTag(this.readPrimitiveList(reader, IntTag.class, IntArrayTag.class));
--        else throw new SNbtDeserializeException("Invalid array type '" + c + "' found");
-+        else if (c == 'B') {
-+            final ListTag<ByteTag> tags = this.readPrimitiveList(reader, ByteTag.class, ByteArrayTag.class);
-+            final byte[] array = new byte[tags.size()];
-+            for (int i = 0; i < tags.size(); i++) {
-+                array[i] = tags.get(i).asByte();
-+            }
-+            return new ByteArrayTag(array);
-+        } else if (c == 'L') {
-+            final ListTag<LongTag> tags = this.readPrimitiveList(reader, LongTag.class, LongArrayTag.class);
-+            final long[] array = new long[tags.size()];
-+            for (int i = 0; i < tags.size(); i++) {
-+                array[i] = tags.get(i).asLong();
-+            }
-+            return new LongArrayTag(array);
-+        } else if (c == 'I') {
-+            final ListTag<IntTag> tags = this.readPrimitiveList(reader, IntTag.class, IntArrayTag.class);
-+            final int[] array = new int[tags.size()];
-+            for (int i = 0; i < tags.size(); i++) {
-+                array[i] = tags.get(i).asInt();
-+            }
-+            return new IntArrayTag(array);
-+        } else throw new SNbtDeserializeException("Invalid array type '" + c + "' found");
-     }
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java	(date 1736614412299)
+@@ -36,6 +36,13 @@
  
-     protected Tag readValue(final StringReader_v1_12 reader) throws SNbtDeserializeException {
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java
-index a60fc64..e839e9b 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java
-@@ -32,6 +32,13 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
- 
-     private final List<ATextComponent> siblings = new ArrayList<>();
+     private final List<TextComponent> siblings = new ArrayList<>();
      private Style style = new Style();
 +    private int level = 1;
 +    private void setLevel(int level) {
@@ -52,145 +14,110 @@ index a60fc64..e839e9b 100644
 +    }
  
      /**
-      * Append a string to this component.
-@@ -52,6 +59,7 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
+      * Append multiple strings to this component.
+@@ -56,6 +63,7 @@
       */
-     public ATextComponent append(final ATextComponent component) {
+     public TextComponent append(final TextComponent component) {
          this.siblings.add(component);
 +        component.setLevel(this.level + 1);
          return this;
      }
  
-@@ -63,6 +71,7 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
+@@ -67,11 +75,13 @@
       */
-     public ATextComponent append(final ATextComponent... components) {
-         this.siblings.addAll(Arrays.asList(components));
-+        for (ATextComponent component : components) component.setLevel(this.level + 1);
+     public TextComponent append(final TextComponent... components) {
+         Collections.addAll(this.siblings, components);
++        for (TextComponent component : components) component.setLevel(this.level + 1);
          return this;
      }
  
-@@ -177,24 +186,28 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
-         return out.toString();
+     public TextComponent append(final Iterable<TextComponent> components) {
+         components.forEach(this.siblings::add);
++        for (TextComponent component : components) component.setLevel(this.level + 1);
+         return this;
      }
+
+diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
+--- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java	(date 1736615658895)
+@@ -58,9 +58,9 @@
  
--    /**
--     * @return A legacy formatted string representation of this component
--     */
--    public String asLegacyFormatString() {
--        StringBuilder out = new StringBuilder();
--        if (this.style.getColor() != null && this.style.getColor().isFormattingColor()) out.append(COLOR_CHAR).append(this.style.getColor().getCode());
--        else out.append("§r");
--        if (this.style.isObfuscated()) out.append(COLOR_CHAR).append(TextFormatting.OBFUSCATED.getCode());
--        if (this.style.isBold()) out.append(COLOR_CHAR).append(TextFormatting.BOLD.getCode());
--        if (this.style.isStrikethrough()) out.append(COLOR_CHAR).append(TextFormatting.STRIKETHROUGH.getCode());
--        if (this.style.isUnderlined()) out.append(COLOR_CHAR).append(TextFormatting.UNDERLINE.getCode());
--        if (this.style.isItalic()) out.append(COLOR_CHAR).append(TextFormatting.ITALIC.getCode());
--        out.append(this.asSingleString());
-+    public void visit(final Consumer<String> consumer) {
-+        if (this.style.getColor() != null && this.style.getColor().isFormattingColor()) consumer.accept(Character.toString(COLOR_CHAR) + this.style.getColor().getCode());
-+        else consumer.accept("§r");
-+        if (this.style.isObfuscated()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.OBFUSCATED.getCode());
-+        if (this.style.isBold()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.BOLD.getCode());
-+        if (this.style.isStrikethrough()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.STRIKETHROUGH.getCode());
-+        if (this.style.isUnderlined()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.UNDERLINE.getCode());
-+        if (this.style.isItalic()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.ITALIC.getCode());
-+        consumer.accept(this.asSingleString());
-         for (ATextComponent sibling : this.siblings) {
-             ATextComponent copy = sibling.copy();
-             copy.getStyle().setParent(this.style);
--            out.append(copy.asLegacyFormatString());
-+            copy.visit(consumer);
-         }
-+    }
-+    /**
-+     * @return A legacy formatted string representation of this component
-+     */
-+    public final String asLegacyFormatString() {
-+        // Improve traversal performance
-+        StringBuilder out = new StringBuilder();
-+        this.visit(out::append);
-         return out.toString();
-     }
+     @Test
+     void legacyItemDeserialization() throws SNbtSerializeException {
+-        CompoundTag legacyNbt = new CompoundTag()
+-                .put("id", "stone")
+-                .putByte("Count", (byte) 5);
++        CompoundTag legacyNbt = new CompoundTag();
++        legacyNbt.put("id", new StringTag("stone"));
++        legacyNbt.putByte("Count", (byte) 5);
+         TextComponent legacyComponent = new StringComponent("test")
+                 .setStyle(new Style()
+                         .setHoverEvent(new TextHoverEvent(HoverEventAction.SHOW_ITEM, new StringComponent(SNbt.LATEST.serialize(legacyNbt))))
+@@ -77,10 +77,10 @@
+     @Test
+     void legacyEntityDeserialization() throws SNbtSerializeException {
+         UUID randomUUID = UUID.randomUUID();
+-        CompoundTag legacyNbt = new CompoundTag()
+-                .put("name", "{\"text\":\"test\"}")
+-                .put("type", "cow")
+-                .put("id", randomUUID.toString());
++        CompoundTag legacyNbt = new CompoundTag();
++        legacyNbt.put("name", new StringTag("{\"text\":\"test\"}"));
++        legacyNbt.put("type", new StringTag("cow"));
++        legacyNbt.put("id", new StringTag(randomUUID.toString()));
+         TextComponent legacyComponent = new StringComponent("test")
+                 .setStyle(new Style()
+                         .setHoverEvent(new TextHoverEvent(HoverEventAction.SHOW_ENTITY, new StringComponent(SNbt.LATEST.serialize(legacyNbt))))
+@@ -97,19 +97,31 @@
  
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
-index 91b176d..8158521 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
-@@ -142,8 +142,29 @@ public class TranslationComponent extends ATextComponent {
-     }
- 
-     @Override
--    public String asLegacyFormatString() {
--        return this.resolveIntoComponents().asLegacyFormatString();
-+    public void visit(final java.util.function.Consumer<String> consumer) {
-+        if (consumer instanceof TranslatableContentConsumer) {
-+            this.resolveIntoComponents().visit(consumer);
-+        } else {
-+            this.resolveIntoComponents().visit(new TranslatableContentConsumer(consumer));
-+        }
-+    }
-+    private static final class TranslatableContentConsumer implements java.util.function.Consumer<String> {
-+        private static final IllegalArgumentException EX = new IllegalArgumentException("Too long");
-+        private final java.util.function.Consumer<String> runnable;
-+        private int visited;
+     @Test
+     void arrayWithTag() {
+-        ListTag<Tag> tags = new ListTag<>()
+-                .add(new CompoundTag()
+-                        .putString("translate", "test")
+-                        .addByteArray("with", (byte) 1, (byte) 2, (byte) 3))
+-                .add(new CompoundTag()
+-                        .putString("translate", "test")
+-                        .addIntArray("with", 1, 2, 3))
+-                .add(new CompoundTag()
+-                        .putString("translate", "test")
+-                        .addLongArray("with", 1, 2, 3))
+-                .add(new CompoundTag()
+-                        .putString("translate", "test")
+-                        .addList("with", 1, 2, 3));
++        CompoundTag translateWithByteArray = new CompoundTag();
++        translateWithByteArray.putString("translate", "test");
++        translateWithByteArray.put("with", new ByteArrayTag(new byte[]{1, 2, 3}));
 +
-+        private TranslatableContentConsumer(final java.util.function.Consumer<String> runnable) {
-+            this.runnable = runnable;
-+        }
++        CompoundTag translateWithIntArray = new CompoundTag();
++        translateWithIntArray.putString("translate", "test");
++        translateWithIntArray.put("with", new IntArrayTag(new int[]{1, 2, 3}));
 +
-+        @Override
-+        public void accept(final String s) {
-+            if (visited++ > 32) {
-+                throw EX;
-+            }
-+            this.runnable.accept(s);
-+        }
-     }
- 
-     @Override
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
-index ed2644d..55c6e02 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
-@@ -117,10 +117,10 @@ public class EntityHoverEvent extends AHoverEvent {
-     @Override
-     public String toString() {
-         return ToString.of(this)
--                .put("action", this.action)
--                .put("entityType", this.entityType)
--                .put("uuid", this.uuid)
--                .put("name", this.name, Objects::nonNull)
-+                .add("action", this.action)
-+                .add("entityType", this.entityType)
-+                .add("uuid", this.uuid)
-+                .add("name", this.name, Objects::nonNull)
-                 .toString();
-     }
- 
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
-index 2812bd2..aea17e6 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
-@@ -119,10 +119,10 @@ public class ItemHoverEvent extends AHoverEvent {
-     @Override
-     public String toString() {
-         return ToString.of(this)
--                .put("action", this.action)
--                .put("item", this.item)
--                .put("count", this.count, count -> count != 1)
--                .put("nbt", this.nbt, Objects::nonNull)
-+                .add("action", this.action)
-+                .add("item", this.item)
-+                .add("count", this.count, count -> count != 1)
-+                .add("nbt", this.nbt, Objects::nonNull)
-                 .toString();
-     }
- 
++        CompoundTag translateWithLongArray = new CompoundTag();
++        translateWithLongArray.putString("translate", "test");
++        translateWithLongArray.put("with", new LongArrayTag(new long[]{1, 2, 3}));
++
++        CompoundTag translateWithList = new CompoundTag();
++        ListTag<IntTag> numberList = new ListTag<>(IntTag.class);
++        numberList.add(new IntTag(1));
++        numberList.add(new IntTag(2));
++        numberList.add(new IntTag(3));
++        translateWithList.putString("translate", "test");
++        translateWithList.put("with", numberList);
++
++        ListTag<CompoundTag> tags = new ListTag<>(CompoundTag.class);
++        tags.add(translateWithByteArray);
++        tags.add(translateWithIntArray);
++        tags.add(translateWithLongArray);
++        tags.add(translateWithList);
+         TextComponent component = new TranslationComponent("test", (byte) 1, (byte) 2, (byte) 3)
+                 .append(new TranslationComponent("test", 1, 2, 3))
+                 .append(new TranslationComponent("test", 1L, 2L, 3L))
+
 diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
-index 8bd6503..e512af7 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
-@@ -25,23 +25,15 @@ public class JsonNbtConverter {
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java	(date 1736615590939)
+@@ -25,23 +25,16 @@
      @Nullable
      public static JsonElement toJson(@Nullable final Tag tag) {
          if (tag == null) return null;
@@ -203,6 +130,7 @@ index 8bd6503..e512af7 100644
 -            case LONG:
 -            case FLOAT:
 -            case DOUBLE:
++
 +        if (tag instanceof NumberTag) {
                  return new JsonPrimitive(((NumberTag) tag).getValue());
 -            case BYTE_ARRAY:
@@ -218,7 +146,7 @@ index 8bd6503..e512af7 100644
                  JsonArray list = new JsonArray();
                  ListTag<Tag> listTag = ((ListTag) tag);
                  for (Tag tagInList : listTag.getValue()) {
-@@ -55,19 +47,19 @@ public class JsonNbtConverter {
+@@ -55,19 +48,19 @@
                      list.add(toJson(tagInList));
                  }
                  return list;
@@ -243,7 +171,7 @@ index 8bd6503..e512af7 100644
                  throw new IllegalArgumentException("Unknown Nbt type: " + tag);
          }
      }
-@@ -90,31 +82,37 @@ public class JsonNbtConverter {
+@@ -90,31 +83,37 @@
              JsonArray array = element.getAsJsonArray();
              List<Tag> nbtTags = new ArrayList<>();
              Tag listType = null;
@@ -289,7 +217,7 @@ index 8bd6503..e512af7 100644
                  return new LongArrayTag(longs);
              } else {
                  return new ListTag<>(nbtTags);
-@@ -148,7 +146,7 @@ public class JsonNbtConverter {
+@@ -148,7 +147,7 @@
  
      private static Tag getListType(final Tag current, final Tag tag) {
          if (current == null) return tag;
@@ -297,89 +225,23 @@ index 8bd6503..e512af7 100644
 +        if (tag == null || current.getClass() != tag.getClass()) return null; //Placeholder for mixed lists
          return current;
      }
+
+diff --git a/MCStructs-text/build.gradle b/MCStructs-text/build.gradle
+--- a/MCStructs-text/build.gradle	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/MCStructs-text/build.gradle	(date 1736615884164)
+@@ -1,7 +1,6 @@
+ dependencies {
+     api "com.google.code.gson:gson:2.11.0"
  
-diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-index cb0628a..18f5d2e 100644
---- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-+++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-@@ -61,9 +61,9 @@ class TextComponentCodecTest {
- 
-     @Test
-     void legacyItemDeserialization() throws SNbtSerializeException {
--        CompoundTag legacyNbt = new CompoundTag()
--                .put("id", "stone")
--                .putByte("Count", (byte) 5);
-+        CompoundTag legacyNbt = new CompoundTag();
-+        legacyNbt.put("id", new StringTag("stone"));
-+        legacyNbt.putByte("Count", (byte) 5);
-         ATextComponent legacyComponent = new StringComponent("test")
-                 .setStyle(new Style()
-                         .setHoverEvent(new TextHoverEvent(HoverEventAction.SHOW_ITEM, new StringComponent(SNbtSerializer.LATEST.serialize(legacyNbt))))
-@@ -80,10 +80,10 @@ class TextComponentCodecTest {
-     @Test
-     void legacyEntityDeserialization() throws SNbtSerializeException {
-         UUID randomUUID = UUID.randomUUID();
--        CompoundTag legacyNbt = new CompoundTag()
--                .put("name", "{\"text\":\"test\"}")
--                .put("type", "cow")
--                .put("id", randomUUID.toString());
-+        CompoundTag legacyNbt = new CompoundTag();
-+        legacyNbt.put("name", new StringTag("{\"text\":\"test\"}"));
-+        legacyNbt.put("type", new StringTag("cow"));
-+        legacyNbt.put("id", new StringTag(randomUUID.toString()));
-         ATextComponent legacyComponent = new StringComponent("test")
-                 .setStyle(new Style()
-                         .setHoverEvent(new TextHoverEvent(HoverEventAction.SHOW_ENTITY, new StringComponent(SNbtSerializer.LATEST.serialize(legacyNbt))))
-@@ -100,19 +100,31 @@ class TextComponentCodecTest {
- 
-     @Test
-     void arrayWithTag() {
--        ListTag<Tag> tags = new ListTag<>()
--                .add(new CompoundTag()
--                        .putString("translate", "test")
--                        .addByteArray("with", (byte) 1, (byte) 2, (byte) 3))
--                .add(new CompoundTag()
--                        .putString("translate", "test")
--                        .addIntArray("with", 1, 2, 3))
--                .add(new CompoundTag()
--                        .putString("translate", "test")
--                        .addLongArray("with", 1, 2, 3))
--                .add(new CompoundTag()
--                        .putString("translate", "test")
--                        .addList("with", 1, 2, 3));
-+        CompoundTag translateWithByteArray = new CompoundTag();
-+        translateWithByteArray.putString("translate", "test");
-+        translateWithByteArray.put("with", new ByteArrayTag(new byte[]{1, 2, 3}));
-+
-+        CompoundTag translateWithIntArray = new CompoundTag();
-+        translateWithIntArray.putString("translate", "test");
-+        translateWithIntArray.put("with", new IntArrayTag(new int[]{1, 2, 3}));
-+
-+        CompoundTag translateWithLongArray = new CompoundTag();
-+        translateWithLongArray.putString("translate", "test");
-+        translateWithLongArray.put("with", new LongArrayTag(new long[]{1, 2, 3}));
-+
-+        CompoundTag translateWithList = new CompoundTag();
-+        ListTag<IntTag> numberList = new ListTag<>(IntTag.class);
-+        numberList.add(new IntTag(1));
-+        numberList.add(new IntTag(2));
-+        numberList.add(new IntTag(3));
-+        translateWithList.putString("translate", "test");
-+        translateWithList.put("with", numberList);
-+
-+        ListTag<CompoundTag> tags = new ListTag<>(CompoundTag.class);
-+        tags.add(translateWithByteArray);
-+        tags.add(translateWithIntArray);
-+        tags.add(translateWithLongArray);
-+        tags.add(translateWithList);
-         ATextComponent component = new TranslationComponent("test", (byte) 1, (byte) 2, (byte) 3)
-                 .append(new TranslationComponent("test", 1, 2, 3))
-                 .append(new TranslationComponent("test", 1L, 2L, 3L))
+-    api project(":MCStructs-converter")
+     api project(":MCStructs-core")
+     api "com.viaversion:nbt:5.0.0"
+     api project(":MCStructs-snbt")
+
 diff --git a/build.gradle b/build.gradle
-index 2178d6b..6b8f7e1 100644
---- a/build.gradle
-+++ b/build.gradle
-@@ -60,17 +60,17 @@ subprojects {
+--- a/build.gradle	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/build.gradle	(date 1736615884157)
+@@ -69,17 +69,17 @@
      publishing {
          repositories {
              maven {
@@ -405,7 +267,7 @@ index 2178d6b..6b8f7e1 100644
                  name = "ossrh"
                  def releasesUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
                  def snapshotsUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-@@ -80,7 +80,7 @@ subprojects {
+@@ -89,7 +89,7 @@
                  authentication {
                      basic(BasicAuthentication)
                  }
@@ -414,11 +276,69 @@ index 2178d6b..6b8f7e1 100644
          }
          publications {
              maven(MavenPublication) {
+
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java	(date 1736615941914)
+@@ -195,10 +195,16 @@
+         Style lastStyle = null;
+         List<TextComponent> texts = new ArrayList<>();
+         texts.add(component.copy().mergeSiblingParentStyle());
++        int translations = 0;
+         while (!texts.isEmpty()) {
+             TextComponent current = texts.remove(0);
+             if (current instanceof TranslationComponent) {
+                 TranslationComponent translation = (TranslationComponent) current;
++                TextComponent resolved = translation.resolveIntoComponents();
++                translations += resolved.getSiblings().size();
++                if (translations >= 100) {
++                    throw new IllegalStateException("Too many translations in a single component");
++                }
+                 texts.add(0, translation.resolveIntoComponents().mergeSiblingParentStyle());
+                 for (int i = 0; i < translation.getSiblings().size(); i++) {
+                     texts.add(i + 1, translation.getSiblings().get(i));
+
+diff --git a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
+--- a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java	(date 1736614294910)
+@@ -95,10 +95,28 @@
+         reader.read();
+         reader.skipWhitespaces();
+         if (!reader.canRead()) throw this.makeException(reader, "Expected value");
+-        else if (c == 'B') return new ByteArrayTag(this.readPrimitiveList(reader, ByteTag.class, ByteArrayTag.class));
+-        else if (c == 'L') return new LongArrayTag(this.readPrimitiveList(reader, LongTag.class, LongArrayTag.class));
+-        else if (c == 'I') return new IntArrayTag(this.readPrimitiveList(reader, IntTag.class, IntArrayTag.class));
+-        else throw new SNbtDeserializeException("Invalid array type '" + c + "' found");
++        else if (c == 'B') {
++            final ListTag<ByteTag> tags = this.readPrimitiveList(reader, ByteTag.class, ByteArrayTag.class);
++            final byte[] array = new byte[tags.size()];
++            for (int i = 0; i < tags.size(); i++) {
++                array[i] = tags.get(i).asByte();
++            }
++            return new ByteArrayTag(array);
++        } else if (c == 'L') {
++            final ListTag<LongTag> tags = this.readPrimitiveList(reader, LongTag.class, LongArrayTag.class);
++            final long[] array = new long[tags.size()];
++            for (int i = 0; i < tags.size(); i++) {
++                array[i] = tags.get(i).asLong();
++            }
++            return new LongArrayTag(array);
++        } else if (c == 'I') {
++            final ListTag<IntTag> tags = this.readPrimitiveList(reader, IntTag.class, IntArrayTag.class);
++            final int[] array = new int[tags.size()];
++            for (int i = 0; i < tags.size(); i++) {
++                array[i] = tags.get(i).asInt();
++            }
++            return new IntArrayTag(array);
++        } else throw new SNbtDeserializeException("Invalid array type '" + c + "' found");
+     }
+ 
+     protected Tag readValue(final StringReader_v1_12 reader) throws SNbtDeserializeException {
+
 diff --git a/settings.gradle b/settings.gradle
-index 64fd6ec..46ca6cc 100644
---- a/settings.gradle
-+++ b/settings.gradle
-@@ -11,11 +11,6 @@ plugins {
+--- a/settings.gradle	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/settings.gradle	(date 1736615884172)
+@@ -11,11 +11,6 @@
  
  rootProject.name = "MCStructs"
  
@@ -430,3 +350,40 @@ index 64fd6ec..46ca6cc 100644
 -include(":MCStructs-nbt")
  include(":MCStructs-snbt")
  include(":MCStructs-text")
+
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java	(date 1736615345426)
+@@ -121,10 +121,10 @@
+     @Override
+     public String toString() {
+         return ToString.of(this)
+-                .put("action", this.action)
+-                .put("entityType", this.entityType)
+-                .put("uuid", this.uuid)
+-                .put("name", this.name, Objects::nonNull)
++                .add("action", this.action)
++                .add("entityType", this.entityType)
++                .add("uuid", this.uuid)
++                .add("name", this.name, Objects::nonNull)
+                 .toString();
+     }
+
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java	(revision 4f60ce806befcb04cf9ef8984f6d892c52034f62)
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java	(date 1736615345433)
+@@ -120,10 +120,10 @@
+     @Override
+     public String toString() {
+         return ToString.of(this)
+-                .put("action", this.action)
+-                .put("item", this.item)
+-                .put("count", this.count, count -> count != 1)
+-                .put("nbt", this.nbt, Objects::nonNull)
++                .add("action", this.action)
++                .add("item", this.item)
++                .add("count", this.count, count -> count != 1)
++                .add("nbt", this.nbt, Objects::nonNull)
+                 .toString();
+     }
+ 
