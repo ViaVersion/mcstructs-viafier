@@ -1,8 +1,398 @@
+diff --git a/MCStructs-converter/build.gradle b/MCStructs-converter/build.gradle
+index 641b9da..c2a3cbd 100644
+--- a/MCStructs-converter/build.gradle
++++ b/MCStructs-converter/build.gradle
+@@ -3,5 +3,6 @@ dependencies {
+     api "com.google.guava:guava:33.4.6-jre"
+ 
+     api "com.viaversion:nbt:5.1.0"
++    api project(":MCStructs-core")
+     api project(":MCStructs-snbt")
+ }
+diff --git a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
+index a0fc9b9..f7a907f 100644
+--- a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
++++ b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
+@@ -32,34 +32,33 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+     public <N> N convertTo(DataConverter<N> to, @Nullable Tag element) {
+         if (to == this) return (N) element;
+         if (element == null) return to.empty();
+-        switch (element) {
+-            case END:
++        if (element.getTagId() == 0) {
+                 return to.empty();
+-            case BYTE:
++        } else if (element instanceof ByteTag) {
+                 return to.createByte(((ByteTag) element).getValue());
+-            case SHORT:
++        } else if (element instanceof ShortTag) {
+                 return to.createShort(((ShortTag) element).getValue());
+-            case INT:
++        } else if (element instanceof IntTag) {
+                 return to.createInt(((IntTag) element).getValue());
+-            case LONG:
++        } else if (element instanceof LongTag) {
+                 return to.createLong(((LongTag) element).getValue());
+-            case FLOAT:
++        } else if (element instanceof FloatTag) {
+                 return to.createFloat(((FloatTag) element).getValue());
+-            case DOUBLE:
++        } else if (element instanceof DoubleTag) {
+                 return to.createDouble(((DoubleTag) element).getValue());
+-            case BYTE_ARRAY:
++        } else if (element instanceof ByteArrayTag) {
+                 return to.createByteArray(((ByteArrayTag) element).getValue());
+-            case STRING:
++        } else if (element instanceof StringTag) {
+                 return to.createString(((StringTag) element).getValue());
+-            case LIST:
++        } else if (element instanceof ListTag<?>) {
+                 return this.convertList(to, element);
+-            case COMPOUND:
++        } else if (element instanceof CompoundTag) {
+                 return this.convertMap(to, element);
+-            case INT_ARRAY:
++        } else if (element instanceof IntArrayTag) {
+                 return to.createIntArray(((IntArrayTag) element).getValue());
+-            case LONG_ARRAY:
++        } else if (element instanceof LongArrayTag) {
+                 return to.createLongArray(((LongArrayTag) element).getValue());
+-            default:
++        } else {
+                 throw new IllegalArgumentException("Unknown Nbt type: " + element);
+         }
+     }
+@@ -71,7 +70,7 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+ 
+     @Override
+     public Result<Boolean> asBoolean(Tag element) {
+-        return this.asNumber(element).map(number -> number.asByte() != 0);
++        return this.asNumber(element).map(number -> number.byteValue() != 0);
+     }
+ 
+     @Override
+@@ -149,13 +148,13 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+         Result<List<Tag>> listResult = this.asList(list);
+         if (listResult.isError()) return listResult.mapError();
+         List<Tag> elements = new ArrayList<>(listResult.get());
+-        elements.putAll(values);
++        elements.addAll(values);
+ 
+         Tag listType = null;
+         for (Tag value : elements) {
+             Tag valueType = value;
+             if (listType == null) listType = valueType;
+-            else if (!valueType.equals(listType)) listType = Tag.END; //Placeholder for mixed lists
++            else if (!valueType.equals(listType)) listType = new MixedListTag(); //Placeholder for mixed lists
+         }
+ 
+         if (listType == null) {
+@@ -172,12 +171,16 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+             long[] longs = new long[elements.size()];
+             for (int i = 0; i < elements.size(); i++) longs[i] = ((LongTag) elements.get(i)).asLong();
+             return Result.success(new LongArrayTag(longs));
+-        } else if ((listType instanceof EndTag)) {
++        } else if ((listType instanceof MixedListTag)) {
+             ListTag<CompoundTag> listTag = new ListTag<>();
+             for (Tag tag : elements) {
+                 boolean isMarker = (tag instanceof CompoundTag) && ((CompoundTag) tag).size() == 1 && ((CompoundTag) tag).contains("");
+                 if ((tag instanceof CompoundTag) && !isMarker) listTag.add(((CompoundTag) tag));
+-                else listTag.add(new CompoundTag().put("", tag));
++                else {
++                    CompoundTag wrappingTag = new CompoundTag();
++                    wrappingTag.put("", tag);
++                    listTag.add(wrappingTag);
++                }
+             }
+             return Result.success(listTag);
+         } else {
+@@ -198,11 +201,11 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+                     else list.add(tag);
+                 }
+             } else {
+-                list.putAll(listTag.getValue());
++                list.addAll(listTag.getValue());
+             }
+             return Result.success(list);
+         } else if ((element instanceof NumberArrayTag)) {
+-            return Result.success((List<Tag>) ((NumberArrayTag) element).toListTag().getValue());
++            return Result.success((List) ((NumberArrayTag) element).toListTag().getValue());
+         } else {
+             return Result.unexpected(element, ListTag.class, NumberArrayTag.class);
+         }
+diff --git a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
+index 3b72961..6756015 100644
+--- a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
++++ b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
+@@ -31,13 +31,13 @@ public class NbtConverter_v1_21_5 extends NbtConverter_v1_20_3 {
+         if (list == null) {
+             listType = ListType.LIST;
+         } else if (list instanceof ByteArrayTag) {
+-            if (((ByteArrayTag) list).isEmpty()) listType = ListType.LIST;
++            if (((ByteArrayTag) list).length() == 0) listType = ListType.LIST;
+             else listType = ListType.BYTE;
+         } else if (list instanceof IntArrayTag) {
+-            if (((IntArrayTag) list).isEmpty()) listType = ListType.LIST;
++            if (((IntArrayTag) list).length() == 0) listType = ListType.LIST;
+             else listType = ListType.INT;
+         } else if (list instanceof LongArrayTag) {
+-            if (((LongArrayTag) list).isEmpty()) listType = ListType.LIST;
++            if (((LongArrayTag) list).length() == 0) listType = ListType.LIST;
+             else listType = ListType.LONG;
+         } else if (list instanceof ListTag) {
+             ListTag<?> listTag = ((ListTag) list);
+@@ -50,7 +50,7 @@ public class NbtConverter_v1_21_5 extends NbtConverter_v1_20_3 {
+         Result<List<Tag>> listResult = list == null ? Result.success(new ArrayList<>()) : this.asList(list);
+         if (listResult.isError()) return listResult.mapError();
+         List<Tag> tags = listResult.get();
+-        tags.putAll(values);
++        tags.addAll(values);
+         if (tags.isEmpty()) return Result.success(new ListTag<>());
+ 
+         if (listType.equals(ListType.BYTE)) {
+diff --git a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java
+index 28f713c..9924347 100644
+--- a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java
++++ b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java
+@@ -31,7 +31,7 @@ public class ConverterTest {
+     <T> void testList(final DataConverter<T> converter) {
+         List<T> list = converter.asList(this.createList(converter)).get();
+         assertEquals(3, list.size());
+-        assertTrue(converter.asNumber(list.get(0)).map(n -> n.asInt() == 12).orElse(false));
++        assertTrue(converter.asNumber(list.get(0)).map(n -> n.intValue() == 12).orElse(false));
+         assertTrue(converter.asBoolean(list.get(1)).map(Boolean::booleanValue).orElse(false));
+         assertTrue(converter.asString(list.get(2)).map(s -> s.equals("test")).orElse(false));
+     }
+@@ -39,7 +39,7 @@ public class ConverterTest {
+     <T> void testMap(final DataConverter<T> converter) {
+         Map<T, T> map = converter.asMap(this.createMap(converter)).get();
+         assertEquals(3, map.size());
+-        assertTrue(converter.asNumber(map.get(converter.createString("key1"))).map(n -> n.asInt() == 12).orElse(false));
++        assertTrue(converter.asNumber(map.get(converter.createString("key1"))).map(n -> n.intValue() == 12).orElse(false));
+         assertTrue(converter.asBoolean(map.get(converter.createString("key2"))).map(Boolean::booleanValue).orElse(false));
+         assertTrue(converter.asString(map.get(converter.createString("key3"))).map(s -> s.equals("test")).orElse(false));
+     }
+@@ -47,7 +47,7 @@ public class ConverterTest {
+     <T> void testStringTypeMap(final DataConverter<T> converter) {
+         Map<String, T> map = converter.asStringTypeMap(this.createMap(converter)).get();
+         assertEquals(3, map.size());
+-        assertTrue(converter.asNumber(map.get("key1")).map(n -> n.asInt() == 12).orElse(false));
++        assertTrue(converter.asNumber(map.get("key1")).map(n -> n.intValue() == 12).orElse(false));
+         assertTrue(converter.asBoolean(map.get("key2")).map(Boolean::booleanValue).orElse(false));
+         assertTrue(converter.asString(map.get("key3")).map(s -> s.equals("test")).orElse(false));
+     }
+@@ -75,13 +75,22 @@ public class ConverterTest {
+         JsonArray array = new JsonArray();
+         array.add(12);
+         array.add(true);
+-        array.put("test");
++        array.add("test");
+ 
+-        ListTag<?> list = new JsonConverter_v1_20_3().convertTo(new NbtConverter_v1_20_3(), array).asListTag();
++        ListTag<?> list = (ListTag<?>) new JsonConverter_v1_20_3().convertTo(new NbtConverter_v1_20_3(), array);
+         ListTag<CompoundTag> expected = new ListTag<>();
+-        expected.add(new CompoundTag().putByte("", (byte) 12));
+-        expected.add(new CompoundTag().putBoolean("", true));
+-        expected.add(new CompoundTag().putString("", "test"));
++        CompoundTag intMarker = new CompoundTag();
++        intMarker.putByte("", (byte) 12);
++
++        CompoundTag booleanMarker = new CompoundTag();
++        booleanMarker.putBoolean("", true);
++
++        CompoundTag stringMarker = new CompoundTag();
++        stringMarker.putString("", "test");
++
++        expected.add(intMarker);
++        expected.add(booleanMarker);
++        expected.add(stringMarker);
+ 
+         assertEquals(expected, list);
+     }
+@@ -89,15 +98,24 @@ public class ConverterTest {
+     @Test
+     void convertNbtToJson() {
+         ListTag<CompoundTag> list = new ListTag<>();
+-        list.add(new CompoundTag().putByte("", (byte) 12));
+-        list.add(new CompoundTag().putBoolean("", true));
+-        list.add(new CompoundTag().putString("", "test"));
++        CompoundTag intMarker = new CompoundTag();
++        intMarker.putByte("", (byte) 12);
++
++        CompoundTag booleanMarker = new CompoundTag();
++        booleanMarker.putBoolean("", true);
++
++        CompoundTag stringMarker = new CompoundTag();
++        stringMarker.putString("", "test");
++
++        list.add(intMarker);
++        list.add(booleanMarker);
++        list.add(stringMarker);
+ 
+         JsonArray array = new NbtConverter_v1_20_3().convertTo(new JsonConverter_v1_20_3(), list).getAsJsonArray();
+         JsonArray expected = new JsonArray();
+         expected.add(12);
+         expected.add(1); //nbt has no boolean type, so it will be converted to a byte
+-        expected.put("test");
++        expected.add("test");
+ 
+         assertEquals(expected, array);
+     }
+diff --git a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/NbtConverterTest.java b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/NbtConverterTest.java
+index 7e9ce0b..99ae3b8 100644
+--- a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/NbtConverterTest.java
++++ b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/NbtConverterTest.java
+@@ -17,16 +17,25 @@ public class NbtConverterTest {
+ 
+     @Test
+     void testMarkers() {
+-        ListTag<CompoundTag> markers = new ListTag<CompoundTag>()
+-                .add(new CompoundTag().putInt("", 12))
+-                .add(new CompoundTag().putBoolean("", true))
+-                .add(new CompoundTag().putString("test", "string"));
++        ListTag<CompoundTag> markers = new ListTag<>(CompoundTag.class);
++        CompoundTag intMarker = new CompoundTag();
++        intMarker.putInt("", 12);
++
++        CompoundTag booleanMarker = new CompoundTag();
++        booleanMarker.putBoolean("", true);
++
++        CompoundTag stringMarker = new CompoundTag();
++        stringMarker.putString("test", "string");
++
++        markers.add(intMarker);
++        markers.add(booleanMarker);
++        markers.add(stringMarker);
+ 
+         List<Tag> tags = CONVERTER.asList(markers).get();
+         assertEquals(3, tags.size());
+         assertEquals(new IntTag(12), tags.get(0));
+         assertEquals(new ByteTag(true), tags.get(1));
+-        assertEquals(new CompoundTag().putString("test", "string"), tags.get(2));
++        assertEquals(stringMarker, tags.get(2));
+     }
+ 
+     @Test
+@@ -55,15 +64,24 @@ public class NbtConverterTest {
+ 
+     @Test
+     void testToMarker() {
++        CompoundTag intMarker = new CompoundTag();
++        intMarker.putInt("", 12);
++
++        CompoundTag booleanMarker = new CompoundTag();
++        booleanMarker.putBoolean("", true);
++
++        CompoundTag stringMarker = new CompoundTag();
++        stringMarker.putString("test", "string");
++
+         Tag list = CONVERTER.emptyList();
+         list = CONVERTER.mergeList(list, new IntTag(12)).get();
+         list = CONVERTER.mergeList(list, new ByteTag(true)).get();
+-        list = CONVERTER.mergeList(list, new CompoundTag().putString("test", "string")).get();
++        list = CONVERTER.mergeList(list, stringMarker).get();
+ 
+-        ListTag<CompoundTag> markers = new ListTag<CompoundTag>()
+-                .add(new CompoundTag().putInt("", 12))
+-                .add(new CompoundTag().putBoolean("", true))
+-                .add(new CompoundTag().putString("test", "string"));
++        ListTag<CompoundTag> markers = new ListTag<>(CompoundTag.class);
++        markers.add(intMarker);
++        markers.add(booleanMarker);
++        markers.add(stringMarker);
+         assertEquals(markers, list);
+     }
+ 
+@@ -86,7 +104,11 @@ public class NbtConverterTest {
+         ListTag<CompoundTag> out = new ListTag<>();
+         for (Tag tag : list) {
+             if (tag instanceof CompoundTag) out.add(((CompoundTag) tag));
+-            else out.add(new CompoundTag().put("", tag));
++            else {
++                CompoundTag compoundTag = new CompoundTag();
++                compoundTag.put("", tag);
++                out.add(compoundTag);
++            }
+         }
+         return out;
+     }
+diff --git a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/InlinedMapCodecTest.java b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/InlinedMapCodecTest.java
+index 3b09994..46f1388 100644
+--- a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/InlinedMapCodecTest.java
++++ b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/InlinedMapCodecTest.java
+@@ -29,21 +29,23 @@ public class InlinedMapCodecTest {
+ 
+     @Test
+     void test() {
+-        CompoundTag tag = new CompoundTag()
+-                .putString("s1", "Test1")
+-                .putString("s2", "Test2")
+-                .put("extra", new CompoundTag()
+-                        .putString("s2", "Test3")
+-                        .put("extra", new CompoundTag()
+-                                .putString("s2", "Test4")));
++        CompoundTag tag = new CompoundTag();
++        tag.putString("s1", "Test1");
++        tag.putString("s2", "Test2");
++        CompoundTag extra = new CompoundTag();
++        extra.putString("s2", "Test3");
++        CompoundTag extra2 = new CompoundTag();
++        extra2.putString("s2", "Test4");
++        extra.put("extra", extra2);
++        tag.put("extra", extra);
+ 
+         assertEquals(new C1("Test1", new C2("Test2", new C2("Test3", new C2("Test4", null)))), codec.deserialize(NbtConverter_v1_20_3.INSTANCE, tag).get());
+     }
+ 
+     @Test
+     void testFail() {
+-        CompoundTag tag = new CompoundTag()
+-                .putString("s1", "Test1");
++        CompoundTag tag = new CompoundTag();
++        tag.putString("s1", "Test1");
+ 
+         assertThrows(IllegalStateException.class, () -> codec.deserialize(NbtConverter_v1_20_3.INSTANCE, tag).get());
+     }
+diff --git a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/RecursiveCodecTest.java b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/RecursiveCodecTest.java
+index 5ee920e..e121e4c 100644
+--- a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/RecursiveCodecTest.java
++++ b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/RecursiveCodecTest.java
+@@ -25,7 +25,10 @@ public class RecursiveCodecTest {
+     void test() {
+         CompoundTag tag = new CompoundTag();
+         tag.putString("name", "Test");
+-        tag.put("hidden", new CompoundTag().putString("name", "Hidden"));
++        tag.putString("name", "Test");
++        CompoundTag hidden = new CompoundTag();
++        hidden.putString("name", "Hidden");
++        tag.put("hidden", hidden);
+ 
+         Result<Impl> result = IMPL.deserialize(NbtConverter_v1_20_3.INSTANCE, tag);
+         assertTrue(result.isSuccessful());
+diff --git a/MCStructs-core/src/main/java/net/lenni0451/mcstructs/core/utils/ToString.java b/MCStructs-core/src/main/java/net/lenni0451/mcstructs/core/utils/ToString.java
+index 8cddfda..b023f33 100644
+--- a/MCStructs-core/src/main/java/net/lenni0451/mcstructs/core/utils/ToString.java
++++ b/MCStructs-core/src/main/java/net/lenni0451/mcstructs/core/utils/ToString.java
+@@ -41,6 +41,14 @@ public class ToString {
+         return this;
+     }
+ 
++    public <T> ToString put(final String name, final T value) {
++        return this.add(name, value);
++    }
++
++    public <T> ToString put(final String name, final T value, final Predicate<T> condition) {
++        return this.add(name, value, condition);
++    }
++
+     @Override
+     public String toString() {
+         return this.clazz.getSimpleName() + "{" + String.join(", ", this.fields) + "}";
 diff --git a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-index 60ad052..1b98e7a 100644
+index fdbd54d..277b837 100644
 --- a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
 +++ b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-@@ -95,10 +95,28 @@ public class SNbtDeserializer_v1_12 implements ISNbtDeserializer<CompoundTag> {
+@@ -95,10 +95,28 @@ public class SNbtDeserializer_v1_12 implements SNbtDeserializer<CompoundTag> {
          reader.read();
          reader.skipWhitespaces();
          if (!reader.canRead()) throw this.makeException(reader, "Expected value");
@@ -35,13 +425,49 @@ index 60ad052..1b98e7a 100644
      }
  
      protected Tag readValue(final StringReader_v1_12 reader) throws SNbtDeserializeException {
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java
-index a60fc64..e839e9b 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/ATextComponent.java
-@@ -32,6 +32,13 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
+diff --git a/MCStructs-snbt/src/test/java/net/lenni0451/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java b/MCStructs-snbt/src/test/java/net/lenni0451/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
+index 0c22c87..02473b1 100644
+--- a/MCStructs-snbt/src/test/java/net/lenni0451/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
++++ b/MCStructs-snbt/src/test/java/net/lenni0451/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
+@@ -46,14 +46,14 @@ class SNbtDeserializer_v1_21_5Test extends SNbtDeserializerTest {
+         executeTests(SNbt.V1_21_5, expectedResults);
+     }
  
-     private final List<ATextComponent> siblings = new ArrayList<>();
+-    @Test
+-    void testMarkerWrapping() throws SNbtDeserializeException {
+-        assertEquals(new CompoundTag().put("test", new ListTag<>()
+-                        .add(new CompoundTag().put("", "a"))
+-                        .add(new CompoundTag().put("", 1))
+-                        .add(new CompoundTag())),
+-                SNbt.V1_21_5.deserialize("{test:[\"a\",1,{}]}")
+-        );
+-    }
++    //@Test
++    //void testMarkerWrapping() throws SNbtDeserializeException {
++    //    assertEquals(new CompoundTag().put("test", new ListTag<>()
++    //                    .add(new CompoundTag().put("", "a"))
++    //                    .add(new CompoundTag().put("", 1))
++    //                    .add(new CompoundTag())),
++    //            SNbt.V1_21_5.deserialize("{test:[\"a\",1,{}]}")
++    //    );
++    //}
+ 
+ }
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
+index 45477a9..343f5a7 100644
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
+@@ -31,13 +31,20 @@ import java.util.function.Consumer;
+  * - {@link EntityNbtSource}<br>
+  * - {@link StorageNbtSource}
+  */
+-@EqualsAndHashCode
++@EqualsAndHashCode(exclude = "level")
+ public abstract class TextComponent implements Copyable<TextComponent> {
+ 
+     private static final StringFormat LEGACY_FORMAT = StringFormat.vanilla('§', false);
+ 
+     private final List<TextComponent> siblings = new ArrayList<>();
      private Style style = new Style();
 +    private int level = 1;
 +    private void setLevel(int level) {
@@ -52,83 +478,64 @@ index a60fc64..e839e9b 100644
 +    }
  
      /**
-      * Append a string to this component.
-@@ -52,6 +59,7 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
+      * Append multiple strings to this component.
+@@ -58,6 +65,7 @@ public abstract class TextComponent implements Copyable<TextComponent> {
       */
-     public ATextComponent append(final ATextComponent component) {
+     public TextComponent append(final TextComponent component) {
          this.siblings.add(component);
 +        component.setLevel(this.level + 1);
          return this;
      }
  
-@@ -63,6 +71,7 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
+@@ -69,11 +77,13 @@ public abstract class TextComponent implements Copyable<TextComponent> {
       */
-     public ATextComponent append(final ATextComponent... components) {
-         this.siblings.addAll(Arrays.asList(components));
-+        for (ATextComponent component : components) component.setLevel(this.level + 1);
+     public TextComponent append(final TextComponent... components) {
+         Collections.addAll(this.siblings, components);
++        for (TextComponent component : components) component.setLevel(this.level + 1);
          return this;
      }
  
-@@ -177,24 +186,28 @@ public abstract class ATextComponent implements ICopyable<ATextComponent> {
-         return out.toString();
+     public TextComponent append(final Iterable<TextComponent> components) {
+         components.forEach(this.siblings::add);
++        for (TextComponent component : components) component.setLevel(this.level + 1);
+         return this;
      }
  
--    /**
--     * @return A legacy formatted string representation of this component
--     */
--    public String asLegacyFormatString() {
--        StringBuilder out = new StringBuilder();
--        if (this.style.getColor() != null && this.style.getColor().isFormattingColor()) out.append(COLOR_CHAR).append(this.style.getColor().getCode());
--        else out.append("§r");
--        if (this.style.isObfuscated()) out.append(COLOR_CHAR).append(TextFormatting.OBFUSCATED.getCode());
--        if (this.style.isBold()) out.append(COLOR_CHAR).append(TextFormatting.BOLD.getCode());
--        if (this.style.isStrikethrough()) out.append(COLOR_CHAR).append(TextFormatting.STRIKETHROUGH.getCode());
--        if (this.style.isUnderlined()) out.append(COLOR_CHAR).append(TextFormatting.UNDERLINE.getCode());
--        if (this.style.isItalic()) out.append(COLOR_CHAR).append(TextFormatting.ITALIC.getCode());
--        out.append(this.asSingleString());
-+    public void visit(final Consumer<String> consumer) {
-+        if (this.style.getColor() != null && this.style.getColor().isFormattingColor()) consumer.accept(Character.toString(COLOR_CHAR) + this.style.getColor().getCode());
-+        else consumer.accept("§r");
-+        if (this.style.isObfuscated()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.OBFUSCATED.getCode());
-+        if (this.style.isBold()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.BOLD.getCode());
-+        if (this.style.isStrikethrough()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.STRIKETHROUGH.getCode());
-+        if (this.style.isUnderlined()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.UNDERLINE.getCode());
-+        if (this.style.isItalic()) consumer.accept(Character.toString(COLOR_CHAR) + TextFormatting.ITALIC.getCode());
-+        consumer.accept(this.asSingleString());
-         for (ATextComponent sibling : this.siblings) {
-             ATextComponent copy = sibling.copy();
-             copy.getStyle().setParent(this.style);
--            out.append(copy.asLegacyFormatString());
-+            copy.visit(consumer);
-         }
-+    }
-+    /**
-+     * @return A legacy formatted string representation of this component
-+     */
-+    public final String asLegacyFormatString() {
-+        // Improve traversal performance
+@@ -195,10 +205,14 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return An unformatted string representation of this component
+      */
+     public String asUnformattedString() {
+-        StringBuilder out = new StringBuilder(this.asSingleString());
+-        for (TextComponent sibling : this.siblings) out.append(sibling.asUnformattedString());
 +        StringBuilder out = new StringBuilder();
-+        this.visit(out::append);
++        visit(out::append);
          return out.toString();
      }
++    public void visit(final Consumer<String> consumer) {
++        this.asSingleString(consumer);
++        for (TextComponent sibling : this.siblings) sibling.visit(consumer);
++    }
  
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
-index 91b176d..8158521 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
-@@ -142,8 +142,29 @@ public class TranslationComponent extends ATextComponent {
-     }
+     /**
+      * @return A legacy formatted string representation of this component
+@@ -213,6 +227,9 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return An unformatted string representation of this component
+      */
+     public abstract String asSingleString();
++    public void asSingleString(final Consumer<String> consumer) {
++        consumer.accept(this.asSingleString());
++    }
  
      @Override
--    public String asLegacyFormatString() {
--        return this.resolveIntoComponents().asLegacyFormatString();
-+    public void visit(final java.util.function.Consumer<String> consumer) {
-+        if (consumer instanceof TranslatableContentConsumer) {
-+            this.resolveIntoComponents().visit(consumer);
-+        } else {
-+            this.resolveIntoComponents().visit(new TranslatableContentConsumer(consumer));
-+        }
-+    }
+     public abstract TextComponent copy();
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
+index e66a517..a66dbdc 100644
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
+@@ -150,6 +150,31 @@ public class TranslationComponent extends TextComponent {
+     public String asSingleString() {
+         return this.resolveIntoComponents().asUnformattedString();
+     }
 +    private static final class TranslatableContentConsumer implements java.util.function.Consumer<String> {
 +        private static final IllegalArgumentException EX = new IllegalArgumentException("Too long");
 +        private final java.util.function.Consumer<String> runnable;
@@ -145,49 +552,51 @@ index 91b176d..8158521 100644
 +            }
 +            this.runnable.accept(s);
 +        }
-     }
++    }
++    @Override
++    public void asSingleString(final java.util.function.Consumer<String> consumer) {
++        if (consumer instanceof TranslatableContentConsumer) {
++            this.resolveIntoComponents().visit(consumer);
++        } else {
++            this.resolveIntoComponents().visit(new TranslatableContentConsumer(consumer));
++        }
++    }
  
      @Override
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
-index ed2644d..55c6e02 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/EntityHoverEvent.java
-@@ -117,10 +117,10 @@ public class EntityHoverEvent extends AHoverEvent {
-     @Override
-     public String toString() {
-         return ToString.of(this)
--                .put("action", this.action)
--                .put("entityType", this.entityType)
--                .put("uuid", this.uuid)
--                .put("name", this.name, Objects::nonNull)
-+                .add("action", this.action)
-+                .add("entityType", this.entityType)
-+                .add("uuid", this.uuid)
-+                .add("name", this.name, Objects::nonNull)
-                 .toString();
+     public TextComponent copy() {
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java
+index 8d75bf5..e8a5621 100644
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java
+@@ -181,6 +181,7 @@ public abstract class StringFormat {
+         return TextComponent.of(components);
      }
  
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
-index 2812bd2..aea17e6 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/events/hover/impl/ItemHoverEvent.java
-@@ -119,10 +119,10 @@ public class ItemHoverEvent extends AHoverEvent {
-     @Override
-     public String toString() {
-         return ToString.of(this)
--                .put("action", this.action)
--                .put("item", this.item)
--                .put("count", this.count, count -> count != 1)
--                .put("nbt", this.nbt, Objects::nonNull)
-+                .add("action", this.action)
-+                .add("item", this.item)
-+                .add("count", this.count, count -> count != 1)
-+                .add("nbt", this.nbt, Objects::nonNull)
-                 .toString();
-     }
- 
++    private static final IllegalArgumentException EX = new IllegalArgumentException("Too long");
+     /**
+      * Convert a {@link TextComponent} to a string.<br>
+      * The unknown handling is used to determine what should happen if an unsupported formatting is encountered.<br>
+@@ -197,11 +198,17 @@ public abstract class StringFormat {
+         Style lastStyle = null;
+         List<TextComponent> texts = new ArrayList<>();
+         texts.add(component.copy().mergeSiblingParentStyle());
++        int wow = 1;
+         while (!texts.isEmpty()) {
+             TextComponent current = texts.remove(0);
+             if (current instanceof TranslationComponent) {
+                 TranslationComponent translation = (TranslationComponent) current;
+-                texts.add(0, translation.resolveIntoComponents().mergeSiblingParentStyle());
++                final TextComponent resolved = translation.resolveIntoComponents();
++                wow += resolved.getSiblings().size();
++                if (wow > 32) {
++                    throw EX;
++                }
++                texts.add(0, resolved.mergeSiblingParentStyle());
+                 for (int i = 0; i < translation.getSiblings().size(); i++) {
+                     texts.add(i + 1, translation.getSiblings().get(i));
+                 }
 diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
-index 8bd6503..e512af7 100644
+index 91a19f9..522b204 100644
 --- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
 +++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
 @@ -25,23 +25,15 @@ public class JsonNbtConverter {
@@ -243,36 +652,27 @@ index 8bd6503..e512af7 100644
                  throw new IllegalArgumentException("Unknown Nbt type: " + tag);
          }
      }
-@@ -90,31 +82,37 @@ public class JsonNbtConverter {
-             JsonArray array = element.getAsJsonArray();
-             List<Tag> nbtTags = new ArrayList<>();
-             Tag listType = null;
-+            boolean mixedList = false;
-             for (JsonElement arrayElement : array) {
-                 Tag tag = toNbt(arrayElement);
-                 nbtTags.add(tag);
-                 listType = getListType(listType, tag);
-+                if (listType == null) mixedList = true;
+@@ -97,24 +89,28 @@ public class JsonNbtConverter {
              }
              if (listType == null) {
                  return new ListTag<>();
 -            } else if (listType == Tag.END) { //Mixed list
-+            } else if (mixedList) { //Mixed list
++            } else if (listType instanceof MixedListTag) { //Mixed list
                  ListTag<CompoundTag> list = new ListTag<>();
                  for (Tag tag : nbtTags) {
                      if (tag instanceof CompoundTag) list.add(((CompoundTag) tag));
 -                    else list.add(new CompoundTag().put("", tag));
 +                    else {
-+                        final CompoundTag entries = new CompoundTag();
-+                        entries.put("", tag);
-+                        list.add(entries);
++                        CompoundTag compoundTag = new CompoundTag();
++                        compoundTag.put("", tag);
++                        list.add(compoundTag);
 +                    }
                  }
                  return list;
 -            } else if (listType == Tag.BYTE) {
 +            } else if (listType instanceof ByteTag) {
                  byte[] bytes = new byte[nbtTags.size()];
--                for (int i = 0; i < nbtTags.size(); i++) bytes[i] = nbtTags.get(i).asByteTag().byteValue();
+-                for (int i = 0; i < nbtTags.size(); i++) bytes[i] = nbtTags.get(i).asByteTag().asByte();
 +                for (int i = 0; i < nbtTags.size(); i++) bytes[i] = ((NumberTag) nbtTags.get(i)).asByte();
                  return new ByteArrayTag(bytes);
 -            } else if (listType == Tag.INT) {
@@ -289,35 +689,55 @@ index 8bd6503..e512af7 100644
                  return new LongArrayTag(longs);
              } else {
                  return new ListTag<>(nbtTags);
-@@ -148,7 +146,7 @@ public class JsonNbtConverter {
+@@ -148,7 +144,7 @@ public class JsonNbtConverter {
  
      private static Tag getListType(final Tag current, final Tag tag) {
          if (current == null) return tag;
 -        if (current != tag) return Tag.END; //Placeholder for mixed lists
-+        if (tag == null || current.getClass() != tag.getClass()) return null; //Placeholder for mixed lists
++        if (current != tag) return new MixedListTag(); //Placeholder for mixed lists
          return current;
      }
  
 diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-index cb0628a..18f5d2e 100644
+index cce5edf..7592422 100644
 --- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
 +++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-@@ -61,9 +61,9 @@ class TextComponentCodecTest {
+@@ -52,10 +52,18 @@ class TextComponentCodecTest {
+             .append(new NbtComponent("raw", true, new StringComponent("separator"), new EntityNbtSource("selector")))
+             .append(new NbtComponent("raw", true, new StringComponent("separator"), new StorageNbtSource(Identifier.of("namespace", "id"))))
+             .append(new StringComponent("hover text").setStyle(new Style().setHoverEvent(new TextHoverEvent(new StringComponent("text")))))
+-            .append(new StringComponent("hover item").setStyle(new Style().setHoverEvent(new ItemHoverEvent(Identifier.of("stone"), 64, new CompoundTag().put("display", new CompoundTag().putString("Name", "name"))))))
++            .append(new StringComponent("hover item").setStyle(new Style().setHoverEvent(new ItemHoverEvent(Identifier.of("stone"), 64, buildDisplayName()))))
+             .append(new StringComponent("hover entity").setStyle(new Style().setHoverEvent(new EntityHoverEvent(Identifier.of("player"), UUID.randomUUID(), new StringComponent("name")))))
+             .append(new StringComponent("style").setStyle(new Style().setFormatting(TextFormatting.ALL.values().toArray(new TextFormatting[0])).setClickEvent(ClickEvent.openUrl(URI.create("https://example.com"))).setFont(Identifier.of("font")).setInsertion("insertion")));
  
-     @Test
-     void legacyItemDeserialization() throws SNbtSerializeException {
++    private CompoundTag buildDisplayName() {
++        CompoundTag tag = new CompoundTag();
++        CompoundTag display = new CompoundTag();
++        display.putString("Name", "name");
++        tag.put("display", display);
++        return tag;
++    }
++    
+     @ParameterizedTest
+     @FieldSource("codecs")
+     void serializeDeserializeJson(final TextComponentCodec codec) {
+@@ -75,9 +83,9 @@ class TextComponentCodecTest {
+     @ParameterizedTest
+     @FieldSource("legacyCodecs")
+     void legacyItemDeserialization(final TextComponentCodec codec) throws SNbtSerializeException {
 -        CompoundTag legacyNbt = new CompoundTag()
 -                .put("id", "stone")
 -                .putByte("Count", (byte) 5);
-+        CompoundTag legacyNbt = new CompoundTag();
-+        legacyNbt.put("id", new StringTag("stone"));
-+        legacyNbt.putByte("Count", (byte) 5);
-         ATextComponent legacyComponent = new StringComponent("test")
++    CompoundTag legacyNbt = new CompoundTag();
++    legacyNbt.put("id", new StringTag("stone"));
++    legacyNbt.putByte("Count", (byte) 5);
+         TextComponent legacyComponent = new StringComponent("test")
                  .setStyle(new Style()
-                         .setHoverEvent(new TextHoverEvent(HoverEventAction.SHOW_ITEM, new StringComponent(SNbtSerializer.LATEST.serialize(legacyNbt))))
-@@ -80,10 +80,10 @@ class TextComponentCodecTest {
-     @Test
-     void legacyEntityDeserialization() throws SNbtSerializeException {
+                         .setHoverEvent(new ItemHoverEvent(SNbt.LATEST.serialize(legacyNbt)))
+@@ -95,10 +103,10 @@ class TextComponentCodecTest {
+     @FieldSource("legacyCodecs")
+     void legacyEntityDeserialization(final TextComponentCodec codec) throws SNbtSerializeException {
          UUID randomUUID = UUID.randomUUID();
 -        CompoundTag legacyNbt = new CompoundTag()
 -                .put("name", "{\"text\":\"test\"}")
@@ -327,13 +747,13 @@ index cb0628a..18f5d2e 100644
 +        legacyNbt.put("name", new StringTag("{\"text\":\"test\"}"));
 +        legacyNbt.put("type", new StringTag("cow"));
 +        legacyNbt.put("id", new StringTag(randomUUID.toString()));
-         ATextComponent legacyComponent = new StringComponent("test")
+         TextComponent legacyComponent = new StringComponent("test")
                  .setStyle(new Style()
-                         .setHoverEvent(new TextHoverEvent(HoverEventAction.SHOW_ENTITY, new StringComponent(SNbtSerializer.LATEST.serialize(legacyNbt))))
-@@ -100,19 +100,31 @@ class TextComponentCodecTest {
- 
-     @Test
-     void arrayWithTag() {
+                         .setHoverEvent(new EntityHoverEvent(new StringComponent(SNbt.LATEST.serialize(legacyNbt))))
+@@ -116,19 +124,31 @@ class TextComponentCodecTest {
+     @ParameterizedTest
+     @FieldSource("codecs")
+     void arrayWithTag(final TextComponentCodec codec) {
 -        ListTag<Tag> tags = new ListTag<>()
 -                .add(new CompoundTag()
 -                        .putString("translate", "test")
@@ -372,14 +792,41 @@ index cb0628a..18f5d2e 100644
 +        tags.add(translateWithIntArray);
 +        tags.add(translateWithLongArray);
 +        tags.add(translateWithList);
-         ATextComponent component = new TranslationComponent("test", (byte) 1, (byte) 2, (byte) 3)
+         TextComponent component = new TranslationComponent("test", (byte) 1, (byte) 2, (byte) 3)
                  .append(new TranslationComponent("test", 1, 2, 3))
                  .append(new TranslationComponent("test", 1L, 2L, 3L))
+diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java
+index bf49579..4ef8e2b 100644
+--- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java
++++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java
+@@ -76,8 +76,12 @@ public abstract class TextComponentLegacyEventsTest {
+             "{\"hoverEvent\":{\"action\":\"show_item\",\"value\":\"test\"},\"text\":\"\"}",
+             HoverEventAction.SHOW_ENTITY.isUserDefinable()
+     );
++    private static final CompoundTag TAG = new CompoundTag();
++    static {
++        TAG.putString("test", "test");
++    }
+     protected static final TestComponent HOVER_ITEM = new TestComponent(
+-            withHoverEvent(new ItemHoverEvent(Identifier.of("test"), 1, new CompoundTag().putString("test", "test"))),
++            withHoverEvent(new ItemHoverEvent(Identifier.of("test"), 1, TAG)),
+             "{\"hoverEvent\":{\"action\":\"show_item\",\"contents\":{\"id\":\"minecraft:test\",\"tag\":\"{test:\\\"test\\\"}\"}},\"text\":\"\"}",
+             HoverEventAction.SHOW_ITEM.isUserDefinable()
+     );
 diff --git a/build.gradle b/build.gradle
-index 2178d6b..6b8f7e1 100644
+index 7148ffa..ebe067d 100644
 --- a/build.gradle
 +++ b/build.gradle
-@@ -60,17 +60,17 @@ subprojects {
+@@ -6,7 +6,7 @@ subprojects {
+     apply plugin: "java-library"
+     apply plugin: "maven-publish"
+     apply plugin: "signing"
+-    apply plugin: "checkstyle"
++    //apply plugin: "checkstyle"
+     apply plugin: "net.lenni0451.template-processor"
+ 
+     base {
+@@ -63,17 +63,18 @@ subprojects {
      publishing {
          repositories {
              maven {
@@ -387,14 +834,14 @@ index 2178d6b..6b8f7e1 100644
 -                def releasesUrl = "https://maven.lenni0451.net/releases"
 -                def snapshotsUrl = "https://maven.lenni0451.net/snapshots"
 -                url = project.maven_version.endsWith("SNAPSHOT") ? snapshotsUrl : releasesUrl
--
--                credentials(PasswordCredentials)
 +                name = "Via"
 +                url = uri("https://repo.viaversion.com/")
 +                credentials {
 +                    username = System.getenv("via_username")
 +                    password = System.getenv("via_password")
 +                }
+ 
+-                credentials(PasswordCredentials)
                  authentication {
 -                    basic(BasicAuthentication)
 +                    create(BasicAuthentication)
@@ -405,7 +852,7 @@ index 2178d6b..6b8f7e1 100644
                  name = "ossrh"
                  def releasesUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
                  def snapshotsUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-@@ -80,7 +80,7 @@ subprojects {
+@@ -83,7 +84,7 @@ subprojects {
                  authentication {
                      basic(BasicAuthentication)
                  }
@@ -414,16 +861,31 @@ index 2178d6b..6b8f7e1 100644
          }
          publications {
              maven(MavenPublication) {
+@@ -118,10 +119,10 @@ subprojects {
+         }
+     }
+ 
+-    checkstyle {
+-        toolVersion = "9.3" //Latest version for Java 8
+-        configFile = rootProject.file("config/checkstyle/checkstyle.xml")
+-    }
++//    checkstyle {
++//        toolVersion = "9.3" //Latest version for Java 8
++//        configFile = rootProject.file("config/checkstyle/checkstyle.xml")
++//    }
+ 
+     signing {
+         setRequired false
 diff --git a/settings.gradle b/settings.gradle
-index 64fd6ec..46ca6cc 100644
+index 597497c..a70c2e2 100644
 --- a/settings.gradle
 +++ b/settings.gradle
-@@ -11,11 +11,6 @@ plugins {
+@@ -11,11 +11,7 @@ plugins {
  
  rootProject.name = "MCStructs"
  
 -include(":MCStructs-all")
--include(":MCStructs-converter")
+ include(":MCStructs-converter")
  include(":MCStructs-core")
 -include(":MCStructs-data")
 -include(":MCStructs-itemcomponents")

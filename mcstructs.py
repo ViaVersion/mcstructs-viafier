@@ -2,7 +2,7 @@ import os
 import re
 import subprocess
 
-via_nbt_version = '5.0.0'
+via_nbt_version = '5.1.0'
 version_prefix = '5'
 
 # All of this would work better with bytecode rewriting, but here we go
@@ -16,16 +16,25 @@ replacements = {
     # Code changes
     'import net.lenni0451.mcstructs.nbt.tags.': 'import com.viaversion.nbt.tag.',
     'import net.lenni0451.mcstructs.nbt.': 'import com.viaversion.nbt.tag.',
-    'INbtTag': 'Tag',
-    'INbtNumber': 'NumberTag',
+    'import com.viaversion.nbt.tag.utils.NbtCodecUtils;': '',
+    'NbtTag': 'Tag',
+    'NbtNumber': 'NumberTag',
+    'NbtArray': 'NumberArrayTag',
     'tag.getNbtType()': 'tag',
+    'value.getNbtType()': 'value',
+    'element.getNbtType()': 'element',
     'ArrayTag.getLength()': 'ArrayTag.length()',
     'type.name()': 'type.getClass().getSimpleName()',
     'NbtType': 'Tag',
     'import com.viaversion.nbt.tag.Tag': 'import com.viaversion.nbt.tag.*',
     'import com.viaversion.nbt.tag.CompoundTag': 'import com.viaversion.nbt.tag.*',
+
+    'import static net.lenni0451.mcstructs.nbt.utils.NbtCodecUtils.MARKER_KEY;': '//',
+    'MARKER_KEY': '""',
+
     # A special one
-    '            if (!list.canAdd(tag)) throw new SNbtDeserializeException("Unable to insert " + tag.getClass().getSimpleName() + " into ListTag of type " + list.getType().name());': ''
+    '            if (!list.canAdd(tag)) throw new SNbtDeserializeException("Unable to insert " + tag.getClass().getSimpleName() + " into ListTag of type " + list.getType().name());': '',
+    'return NbtCodecUtils.wrapIfRequired(list);': 'return null /*Not required by ViaVersion at the moment*/;'
 }
 
 # Apply these separately to avoid changing json calls
@@ -41,20 +50,38 @@ extra_replacements = {
     '.addAll(': '.putAll(',
     '.getTag().name()': '.getClass()',
     '.intValue()': '.asInt()',
+    '.byteValue()': '.asByte()',
+    '.longValue()': '.asLong()',
     'tag.name()': 'tag.getClass()',
+    'tag.getLength()': 'tag.length()',
+
     'super.serialize(object).asCompoundTag()': '((CompoundTag) super.serialize(object))',
     'list.getType().isNumber()': 'list.getElementType().isAssignableFrom(com.viaversion.nbt.tag.NumberTag.class)',
-    'values.get(i).asNumberTag().asInt()': '((NumberTag) values.get(i)).asInt()',
     'this.styleSerializer.serialize(object.getStyle()).asCompoundTag()': '(CompoundTag) this.styleSerializer.serialize(object.getStyle())',
     'JsonNbtConverter.toNbt(json).asCompoundTag()': '((CompoundTag) JsonNbtConverter.toNbt(json))',
     'Tag.COMPOUND.equals(list.getType())': 'CompoundTag.class == list.getElementType()',
     'Tag.COMPOUND.equals(listTag.getType())': 'CompoundTag.class == listTag.getElementType()',
     'compound.add(': 'compound.put(',
     '.numberValue()': '.getValue()',
+
+    'entry.getKey().isStringTag()': '(entry.getKey() instanceof StringTag)',
+    'entry.getKey().asStringTag()': '((StringTag) entry.getKey())',
+    'tags.get(0).getTag()': 'tags.get(0)',
+    'Tag::isByteTag': 'tag -> tag instanceof ByteTag',
+    'Tag::isIntTag': 'tag -> tag instanceof IntTag',
+    'Tag::isLongTag': 'tag -> tag instanceof LongTag',
+    'Tag::isNumberTag': 'tag -> tag instanceof NumberTag',
+    'elements.get(i).asByteTag()': '((ByteTag) elements.get(i))',
+    'elements.get(i).asIntTag()': '((IntTag) elements.get(i))',
+    'elements.get(i).asLongTag()': '((LongTag) elements.get(i))',
+    'list.get(i).asNumberTag()': '((NumberTag) list.get(i))',
+    'values.get(i).asNumberTag().asInt()': '((NumberTag) values.get(i)).asInt()',
+    'values.get(i).asNumberTag().asByte()': '((NumberTag) values.get(i)).asByte()',
+    'values.get(i).asNumberTag().asLong()': '((NumberTag) values.get(i)).asLong()',
+
     '(ACTION)': '("action")',
     '(CONTENTS, ': '("contents", ',
     '(CONTENTS)': '("contents")',
-    'tags.get(0).getTag()': 'tags.get(0)',
     # Special ones
     '!type.equals(tags.get(i).getTag())': "type.getClass() != tags.get(i).getClass()",
     'String type = ((StringTag) tag.get("type")).getValue()': 'String type = tag.contains("type") ? ((StringTag) tag.get("type")).getValue() : null'
@@ -68,6 +95,7 @@ def main():
     handle_file('gradle.properties')
     deep('MCStructs-snbt')
     deep('MCStructs-text')
+    deep('MCStructs-converter')
 
     # Apply additional manual changes
     apply_patch('../patch.patch')
@@ -121,6 +149,8 @@ def replace_get_value(content, obj):
     content = re.sub(fr'{obj}\.get\(([^)]+)\).as(\w+Tag)\(\)',
                      fr'((\2) {obj}.get(\1))',
                      content)
+    # Tag::asXTag -> tag -> ((XTag) tag)
+    content = re.sub(r'Tag::as(\w+Tag)', r'tag -> ((\1) tag)', content)
 
     numeric_types = {'Byte', 'Short', 'Int', 'Long', 'Float', 'Double'}
     for numeric_type in numeric_types:
@@ -150,12 +180,12 @@ def handle_file(path):
         changed_content = changed_content.replace(old, new)
 
     name = os.path.basename(path)
-    if 'CompoundTag ' in changed_content:
+    if 'CompoundTag' in changed_content:
         # Some are very explicit, so that they don't break random code elsewhere/make it look like it worked fine
         for old, new in extra_replacements.items():
             changed_content = changed_content.replace(old, new)
 
-        if 'JsonHoverEventSerializer' not in name:
+        if 'HoverEventSerializer' not in name:
             changed_content = changed_content.replace('.add("', '.put("')
 
         # tag.isXTag() -> (tag instanceof XTag)
