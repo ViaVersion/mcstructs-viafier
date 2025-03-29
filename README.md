@@ -11,7 +11,7 @@ Then you can run the Python script to apply the automated updates.
 ```bash
 py mcstructs.py
 cd MCStructs
-gradlew test -x checkstyleMain
+gradlew test
 ```
 
 ## Dependency
