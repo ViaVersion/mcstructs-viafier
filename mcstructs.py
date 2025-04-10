@@ -103,6 +103,7 @@ def main():
 
 def apply_patch(patch_file):
     try:
+        # git apply --reject --ignore-whitespace --ignore-space-change ../patch.patch
         subprocess.run(['git', 'apply', '--reject', '--ignore-whitespace', '--ignore-space-change', patch_file],
                        check=True)
         print('Applied patch')

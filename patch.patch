@@ -1,13 +1,12 @@
 diff --git a/MCStructs-converter/build.gradle b/MCStructs-converter/build.gradle
-index 641b9da..c2a3cbd 100644
+index ac4bcf0..43687f7 100644
 --- a/MCStructs-converter/build.gradle
 +++ b/MCStructs-converter/build.gradle
-@@ -3,5 +3,6 @@ dependencies {
-     api "com.google.guava:guava:33.4.6-jre"
+@@ -4,4 +4,5 @@ dependencies {
  
      api "com.viaversion:nbt:5.1.0"
-+    api project(":MCStructs-core")
      api project(":MCStructs-snbt")
++    api project(":MCStructs-core")
  }
 diff --git a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
 index a0fc9b9..f7a907f 100644
@@ -814,7 +813,7 @@ index bf49579..4ef8e2b 100644
              HoverEventAction.SHOW_ITEM.isUserDefinable()
      );
 diff --git a/build.gradle b/build.gradle
-index 7148ffa..ebe067d 100644
+index b7168e6..497bc8a 100644
 --- a/build.gradle
 +++ b/build.gradle
 @@ -6,7 +6,7 @@ subprojects {
@@ -877,7 +876,7 @@ index 7148ffa..ebe067d 100644
      signing {
          setRequired false
 diff --git a/settings.gradle b/settings.gradle
-index 597497c..a70c2e2 100644
+index 4e21e69..9cc65c9 100644
 --- a/settings.gradle
 +++ b/settings.gradle
 @@ -11,11 +11,7 @@ plugins {
