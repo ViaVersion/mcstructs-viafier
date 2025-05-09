@@ -96,6 +96,7 @@ def main():
     deep('MCStructs-snbt')
     deep('MCStructs-text')
     deep('MCStructs-converter')
+    deep('MCStructs-itemcomponents')
 
     # Apply additional manual changes
     apply_patch('../patch.patch')

@@ -1,5 +1,5 @@
 diff --git a/MCStructs-converter/build.gradle b/MCStructs-converter/build.gradle
-index ac4bcf0..43687f7 100644
+index f1882a3..8d64646 100644
 --- a/MCStructs-converter/build.gradle
 +++ b/MCStructs-converter/build.gradle
 @@ -4,4 +4,5 @@ dependencies {
@@ -387,6 +387,83 @@ index 8cddfda..b023f33 100644
      @Override
      public String toString() {
          return this.clazz.getSimpleName() + "{" + String.join(", ", this.fields) + "}";
+diff --git a/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java b/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
+index 8524a83..9f9472c 100644
+--- a/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
++++ b/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
+@@ -229,7 +229,7 @@ public class ItemComponents_v1_20_5 extends ItemComponentRegistry {
+                                     GameProfile.Property::new
+                             ).listOf().map(properties -> {
+                                 List<GameProfile.Property> list = new ArrayList<>();
+-                                for (Map.Entry<String, List<GameProfile.Property>> entry : properties.entrySet()) list.putAll(entry.getValue());
++                                for (Map.Entry<String, List<GameProfile.Property>> entry : properties.entrySet()) list.addAll(entry.getValue());
+                                 return list;
+                             }, list -> {
+                                 Map<String, List<GameProfile.Property>> properties = new HashMap<>();
+diff --git a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java
+index 6386dde..a5b4ad1 100644
+--- a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java
++++ b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java
+@@ -35,7 +35,7 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
+ 
+     @Override
+     public void register(ItemComponents_v1_20_5 registry) {
+-        register(registry.CUSTOM_DATA, new CompoundTag().putString("test", "test2"));
++        register(registry.CUSTOM_DATA, new CompoundTag());
+         register(registry.MAX_STACK_SIZE, 12);
+         register(registry.MAX_DAMAGE, 123);
+         register(registry.DAMAGE, 654);
+@@ -55,7 +55,7 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
+             valueMatchers.put("test", new BlockPredicate.ValueMatcher("val"));
+             valueMatchers.put("test2", new BlockPredicate.ValueMatcher("min val", null));
+             return valueMatchers;
+-        }), new CompoundTag().putInt("abc", 123))), false));
++        }), new CompoundTag())), false));
+         copy(registry.CAN_BREAK, registry.CAN_PLACE_ON);
+         register(registry.ATTRIBUTE_MODIFIERS, new AttributeModifiers(Collections.singletonList(new AttributeModifier(registry.getRegistries().attributeModifier.getEntry(Identifier.of("attr")), new AttributeModifier.EntityAttribute(UUID.randomUUID(), "name", 12.34, AttributeModifier.EntityAttribute.Operation.ADD_MULTIPLIED_TOTAL))), false));
+         register(registry.CUSTOM_MODEL_DATA, 1234);
+@@ -91,9 +91,9 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
+             states.put(registry.getRegistries().block.getEntry(Identifier.of("test2")), "state2");
+             return states;
+         }));
+-        register(registry.ENTITY_DATA, new CompoundTag().putString("id", "pig"));
+-        register(registry.BUCKET_ENTITY_DATA, new CompoundTag().addLongArray("test2", 4, 5, 6));
+-        register(registry.BLOCK_ENTITY_DATA, new CompoundTag().putString("id", "pig"));
++        register(registry.ENTITY_DATA, compoundTagWithId());
++        register(registry.BUCKET_ENTITY_DATA, new CompoundTag());
++        register(registry.BLOCK_ENTITY_DATA, compoundTagWithId());
+         register(registry.INSTRUMENT, new EitherEntry<>(new Instrument(new EitherEntry<>(new SoundEvent(Identifier.of("test"), 0.5F)), 12, 13)));
+         register(registry.OMINOUS_BOTTLE_AMPLIFIER, 2);
+         register(registry.RECIPES, Arrays.asList(Identifier.of("test"), Identifier.of("test2")));
+@@ -116,9 +116,14 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
+             blockState.put("test2", "state2");
+             return blockState;
+         }));
+-        register(registry.BEES, Collections.singletonList(new BeeData(new CompoundTag().putBoolean("test", true), 1, 2)));
++        register(registry.BEES, Collections.singletonList(new BeeData(new CompoundTag(), 1, 2)));
+         register(registry.LOCK, "test");
+         register(registry.CONTAINER_LOOT, new ContainerLoot(Identifier.of("test"), 123));
+     }
+ 
++    private CompoundTag compoundTagWithId() {
++        final CompoundTag tag = new CompoundTag();
++        tag.putString("id", "pig");
++        return tag;
++    }
+ }
+diff --git a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java
+index 7681e9b..e95621f 100644
+--- a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java
++++ b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java
+@@ -77,7 +77,7 @@ public class Test_v1_21_5 extends ItemComponentTest<ItemComponents_v1_21_5> {
+             valueMatchers.put("test", new Types_v1_20_5.BlockPredicate.ValueMatcher("val"));
+             valueMatchers.put("test2", new Types_v1_20_5.BlockPredicate.ValueMatcher("min val", null));
+             return valueMatchers;
+-        }), new CompoundTag().putInt("abc", 123))));
++        }), new CompoundTag())));
+         copy(registry.CAN_BREAK, registry.CAN_PLACE_ON);
+         register(registry.ENCHANTMENTS, init(() -> {
+             Map<RegistryEntry, Integer> enchantments = new HashMap<>();
 diff --git a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
 index fdbd54d..277b837 100644
 --- a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
@@ -813,7 +890,7 @@ index bf49579..4ef8e2b 100644
              HoverEventAction.SHOW_ITEM.isUserDefinable()
      );
 diff --git a/build.gradle b/build.gradle
-index b7168e6..497bc8a 100644
+index b6f8b95..5da9a85 100644
 --- a/build.gradle
 +++ b/build.gradle
 @@ -6,7 +6,7 @@ subprojects {
@@ -876,10 +953,10 @@ index b7168e6..497bc8a 100644
      signing {
          setRequired false
 diff --git a/settings.gradle b/settings.gradle
-index 4e21e69..9cc65c9 100644
+index 4e21e69..90e361a 100644
 --- a/settings.gradle
 +++ b/settings.gradle
-@@ -11,11 +11,7 @@ plugins {
+@@ -11,11 +11,8 @@ plugins {
  
  rootProject.name = "MCStructs"
  
@@ -887,7 +964,7 @@ index 4e21e69..9cc65c9 100644
  include(":MCStructs-converter")
  include(":MCStructs-core")
 -include(":MCStructs-data")
--include(":MCStructs-itemcomponents")
+ include(":MCStructs-itemcomponents")
 -include(":MCStructs-nbt")
  include(":MCStructs-snbt")
  include(":MCStructs-text")
