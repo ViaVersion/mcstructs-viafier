@@ -104,7 +104,8 @@ def main():
 
 def apply_patch(patch_file):
     try:
-        # git apply --reject --ignore-whitespace --ignore-space-change ../patch.patch
+        # git add . && git commit -m "a" && git apply --reject --ignore-whitespace --ignore-space-change ../patch.patch
+        # git diff HEAD > ../patch.patch
         subprocess.run(['git', 'apply', '--reject', '--ignore-whitespace', '--ignore-space-change', patch_file],
                        check=True)
         print('Applied patch')
