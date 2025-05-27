@@ -149,61 +149,19 @@ index 3b72961..6756015 100644
          if (tags.isEmpty()) return Result.success(new ListTag<>());
  
          if (listType.equals(ListType.BYTE)) {
-diff --git a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/Result.java b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/Result.java
-index c5bdbce..49e7166 100644
---- a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/Result.java
-+++ b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/Result.java
-@@ -11,21 +11,47 @@ import java.util.stream.Collectors;
- 
- public class Result<T> {
- 
-+    public static boolean simplifyExceptions = true; // way too expensive for general use otherwise
-+
-+    private static final class IllegalStateExceptionNoStack extends IllegalStateException {
-+
-+        public IllegalStateExceptionNoStack(final String error) {
-+            super(error);
-+        }
-+
-+        public IllegalStateExceptionNoStack(final Throwable cause) {
-+            super(cause);
-+        }
-+
-+        @Override
-+        public Throwable fillInStackTrace() {
-+            return this;
-+        }
-+    }
-+
-+    private static IllegalStateException ex(final String error) {
-+        return simplifyExceptions ? new IllegalStateExceptionNoStack(error) : new IllegalStateException(error);
-+    }
-+
-+    private static IllegalStateException ex(final Throwable cause) {
-+        return simplifyExceptions ? new IllegalStateExceptionNoStack(cause) : new IllegalStateException(cause);
-+    }
-+
-     public static <T> Result<T> success(final T result) {
-         return new Result<>(result, null);
+diff --git a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/CodecException.java b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/CodecException.java
+index 82652f9..8e930f9 100644
+--- a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/CodecException.java
++++ b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/CodecException.java
+@@ -10,7 +10,7 @@ public class CodecException extends RuntimeException {
      }
  
-     public static <T> Result<T> error(final String error) {
--        return new Result<>(null, new IllegalStateException(error));
-+        return new Result<>(null, ex(error));
+     @Override
+-    public synchronized Throwable fillInStackTrace() {
++    public Throwable fillInStackTrace() {
+         return this;
      }
  
-     public static <T> Result<T> error(final Throwable cause) {
--        return new Result<>(null, new IllegalStateException(cause));
-+        return new Result<>(null, ex(cause));
-     }
- 
-     public static <T> Result<T> mergeErrors(final String error, final Collection<Result<?>> errors) {
-         String errorMessages = errors.stream().filter(Result::isError).map(Result::error).map(s -> "[" + s + "]").collect(Collectors.joining(","));
--        IllegalStateException exception = new IllegalStateException(error + ": " + errorMessages);
-+        IllegalStateException exception = ex(error + ": " + errorMessages);
-         errors.stream().filter(Result::isError).map(r -> r.error).forEach(exception::addSuppressed);
-         return new Result<>(null, exception);
-     }
 diff --git a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java
 index 28f713c..9924347 100644
 --- a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java
