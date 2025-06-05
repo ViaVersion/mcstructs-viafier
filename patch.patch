@@ -543,7 +543,7 @@ index 0c22c87..02473b1 100644
  
  }
 diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
-index 45477a9..343f5a7 100644
+index 45477a9..001abc2 100644
 --- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
 +++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
 @@ -31,13 +31,20 @@ import java.util.function.Consumer;
@@ -556,8 +556,10 @@ index 45477a9..343f5a7 100644
  
      private static final StringFormat LEGACY_FORMAT = StringFormat.vanilla('§', false);
  
-     private final List<TextComponent> siblings = new ArrayList<>();
-     private Style style = new Style();
+-    private final List<TextComponent> siblings = new ArrayList<>();
+-    private Style style = new Style();
++    private List<TextComponent> siblings;
++    private Style style;
 +    private int level = 1;
 +    private void setLevel(int level) {
 +        this.level = Math.max(this.level, level);
@@ -568,29 +570,138 @@ index 45477a9..343f5a7 100644
  
      /**
       * Append multiple strings to this component.
-@@ -58,6 +65,7 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -46,7 +53,7 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return This component
+      */
+     public TextComponent append(final String... strings) {
+-        for (String s : strings) this.siblings.add(new StringComponent(s));
++        for (String s : strings) this.getSiblings().add(new StringComponent(s));
+         return this;
+     }
+ 
+@@ -57,7 +64,8 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return This component
       */
      public TextComponent append(final TextComponent component) {
-         this.siblings.add(component);
+-        this.siblings.add(component);
++        this.getSiblings().add(component);
 +        component.setLevel(this.level + 1);
          return this;
      }
  
-@@ -69,11 +77,13 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -68,12 +76,14 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return This component
       */
      public TextComponent append(final TextComponent... components) {
-         Collections.addAll(this.siblings, components);
+-        Collections.addAll(this.siblings, components);
++        Collections.addAll(this.getSiblings(), components);
 +        for (TextComponent component : components) component.setLevel(this.level + 1);
          return this;
      }
  
      public TextComponent append(final Iterable<TextComponent> components) {
-         components.forEach(this.siblings::add);
+-        components.forEach(this.siblings::add);
++        components.forEach(this.getSiblings()::add);
 +        for (TextComponent component : components) component.setLevel(this.level + 1);
          return this;
      }
  
-@@ -195,10 +205,14 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -81,6 +91,15 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return The siblings of this component
+      */
+     public List<TextComponent> getSiblings() {
++        if (this.siblings == null) {
++            this.siblings = new ArrayList<>();
++        }
++        return this.siblings;
++    }
++    public List<TextComponent> getSiblingsOrDummy() {
++        if (this.siblings == null) {
++            return Collections.emptyList();
++        }
+         return this.siblings;
+     }
+ 
+@@ -93,7 +112,7 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      */
+     public TextComponent forEach(final Consumer<TextComponent> consumer) {
+         consumer.accept(this);
+-        for (TextComponent sibling : this.siblings) sibling.forEach(consumer);
++        for (TextComponent sibling : this.getSiblingsOrDummy()) sibling.forEach(consumer);
+         return this;
+     }
+ 
+@@ -102,6 +121,9 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      */
+     @Nonnull
+     public Style getStyle() {
++        if (this.style == null) {
++            this.style = new Style();
++        }
+         return this.style;
+     }
+ 
+@@ -123,7 +145,7 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return This component
+      */
+     public TextComponent styled(final Consumer<Style> styleConsumer) {
+-        styleConsumer.accept(this.style);
++        styleConsumer.accept(this.getStyle());
+         return this;
+     }
+ 
+@@ -134,7 +156,7 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return This component
+      */
+     public TextComponent formatted(final TextFormatting formatting) {
+-        this.style.setFormatting(formatting);
++        this.getStyle().setFormatting(formatting);
+         return this;
+     }
+ 
+@@ -145,7 +167,7 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return This component
+      */
+     public TextComponent setParentStyle(@Nonnull final Style style) {
+-        this.style.setParent(style);
++        this.getStyle().setParent(style);
+         return this;
+     }
+ 
+@@ -155,8 +177,8 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return This component
+      */
+     public TextComponent setSiblingParentStyle() {
+-        for (TextComponent sibling : this.siblings) {
+-            sibling.getStyle().setParent(this.style);
++        for (TextComponent sibling : this.getSiblingsOrDummy()) {
++            sibling.getStyle().setParent(this.getStyle());
+             sibling.setSiblingParentStyle();
+         }
+         return this;
+@@ -170,8 +192,8 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @see Style#mergeParent()
+      */
+     public TextComponent mergeSiblingParentStyle() {
+-        for (TextComponent sibling : this.siblings) {
+-            sibling.getStyle().setParent(this.style);
++        for (TextComponent sibling : this.getSiblingsOrDummy()) {
++            sibling.getStyle().setParent(this.getStyle());
+             sibling.getStyle().mergeParent();
+             sibling.mergeSiblingParentStyle();
+         }
+@@ -186,8 +208,8 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return The given component
+      */
+     public <C extends TextComponent> C copyMetaTo(final C component) {
+-        component.setStyle(this.style.copy());
+-        for (TextComponent sibling : this.siblings) component.append(sibling.copy());
++        component.setStyle(this.getStyle().copy());
++        for (TextComponent sibling : this.getSiblingsOrDummy()) component.append(sibling.copy());
+         return component;
+     }
+ 
+@@ -195,10 +217,14 @@ public abstract class TextComponent implements Copyable<TextComponent> {
       * @return An unformatted string representation of this component
       */
      public String asUnformattedString() {
@@ -602,12 +713,12 @@ index 45477a9..343f5a7 100644
      }
 +    public void visit(final Consumer<String> consumer) {
 +        this.asSingleString(consumer);
-+        for (TextComponent sibling : this.siblings) sibling.visit(consumer);
++        for (TextComponent sibling : this.getSiblingsOrDummy()) sibling.visit(consumer);
 +    }
  
      /**
       * @return A legacy formatted string representation of this component
-@@ -213,6 +227,9 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -213,6 +239,9 @@ public abstract class TextComponent implements Copyable<TextComponent> {
       * @return An unformatted string representation of this component
       */
      public abstract String asSingleString();
@@ -653,6 +764,23 @@ index e66a517..a66dbdc 100644
  
      @Override
      public TextComponent copy() {
+diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/serializer/TextComponentSerializer.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/serializer/TextComponentSerializer.java
+index f62670f..40ddf6c 100644
+--- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/serializer/TextComponentSerializer.java
++++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/serializer/TextComponentSerializer.java
+@@ -270,11 +270,7 @@ public class TextComponentSerializer {
+      * @return The deserialized text component
+      */
+     public TextComponent deserialize(String json) {
+-        if (this.legacyGson) {
+-            LegacyGson.checkStartingType(json, true);
+-            json = LegacyGson.fixInvalidEscapes(json);
+-        }
+-        return this.getGson().fromJson(json, TextComponent.class);
++        return this.deserializeReader(json); // legacy parsing is terrible
+     }
+ 
+     /**
 diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java
 index 8d75bf5..e8a5621 100644
 --- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java
@@ -903,7 +1031,7 @@ index bf49579..4ef8e2b 100644
              HoverEventAction.SHOW_ITEM.isUserDefinable()
      );
 diff --git a/build.gradle b/build.gradle
-index b6f8b95..5da9a85 100644
+index 082c043..ce0cee5 100644
 --- a/build.gradle
 +++ b/build.gradle
 @@ -6,7 +6,7 @@ subprojects {
