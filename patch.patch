@@ -927,6 +927,19 @@ index bf49579..4ef8e2b 100644
              "{\"hoverEvent\":{\"action\":\"show_item\",\"contents\":{\"id\":\"minecraft:test\",\"tag\":\"{test:\\\"test\\\"}\"}},\"text\":\"\"}",
              HoverEventAction.SHOW_ITEM.isUserDefinable()
      );
+diff --git a/buildSrc/build.gradle b/buildSrc/build.gradle
+index e1c034f..5d434df 100644
+--- a/buildSrc/build.gradle
++++ b/buildSrc/build.gradle
+@@ -5,3 +5,7 @@ plugins {
+ repositories {
+     gradlePluginPortal()
+ }
++
++dependencies {
++    implementation("com.gradleup.shadow:shadow-gradle-plugin:8.3.6")
++}
+\ No newline at end of file
 diff --git a/buildSrc/src/main/groovy/base.java.gradle b/buildSrc/src/main/groovy/base.java.gradle
 index 59279b6..fd3ffae 100644
 --- a/buildSrc/src/main/groovy/base.java.gradle
@@ -940,10 +953,10 @@ index 59279b6..fd3ffae 100644
  
  jar {
 diff --git a/buildSrc/src/main/groovy/project.defaults.gradle b/buildSrc/src/main/groovy/project.defaults.gradle
-index 08a9462..6a85f8a 100644
+index 08a9462..e2914a1 100644
 --- a/buildSrc/src/main/groovy/project.defaults.gradle
 +++ b/buildSrc/src/main/groovy/project.defaults.gradle
-@@ -1,10 +1,9 @@
+@@ -1,10 +1,10 @@
  plugins {
      id "java-library"
      id "base.java"
@@ -952,9 +965,24 @@ index 08a9462..6a85f8a 100644
      id "base.maven_publish"
 -    id "publishing.aggregating_publisher"
 +    id "publishing.via"
++    id "com.gradleup.shadow"
  }
  
  dependencies {
+@@ -16,3 +16,12 @@ dependencies {
+     testCompileOnly libs.lombok
+     testAnnotationProcessor libs.lombok
+ }
++jar {
++    archiveClassifier.set("unshaded")
++}
++shadowJar {
++    configurations = []
++    archiveClassifier.set("")
++    relocate("net.lenni0451.mcstructs", "com.viaversion.viaversion.libs.mcstructs")
++}
++build.dependsOn(shadowJar)
+\ No newline at end of file
 diff --git a/buildSrc/src/main/groovy/publishing.via.gradle b/buildSrc/src/main/groovy/publishing.via.gradle
 new file mode 100644
 index 0000000..0b95355
