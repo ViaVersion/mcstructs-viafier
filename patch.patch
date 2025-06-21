@@ -952,6 +952,29 @@ index 59279b6..fd3ffae 100644
  }
  
  jar {
+diff --git a/buildSrc/src/main/groovy/base.maven_publish.gradle b/buildSrc/src/main/groovy/base.maven_publish.gradle
+index 3def688..68f2ff5 100644
+--- a/buildSrc/src/main/groovy/base.maven_publish.gradle
++++ b/buildSrc/src/main/groovy/base.maven_publish.gradle
+@@ -1,6 +1,7 @@
+ plugins {
+     id "maven-publish"
+     id "signing"
++    id "com.gradleup.shadow"
+ }
+ 
+ java {
+@@ -15,7 +16,9 @@ publishing {
+             groupId = project.maven_group
+             version = project.maven_version
+ 
+-            from components.java
++            artifacts {
++                artifact(tasks.named("shadowJar"))
++            }
+ 
+             pom {
+                 name = project.name
 diff --git a/buildSrc/src/main/groovy/project.defaults.gradle b/buildSrc/src/main/groovy/project.defaults.gradle
 index 08a9462..e2914a1 100644
 --- a/buildSrc/src/main/groovy/project.defaults.gradle
@@ -983,28 +1006,6 @@ index 08a9462..e2914a1 100644
 +}
 +build.dependsOn(shadowJar)
 \ No newline at end of file
-diff --git a/buildSrc/src/main/groovy/publishing.via.gradle b/buildSrc/src/main/groovy/publishing.via.gradle
-new file mode 100644
-index 0000000..0b95355
---- /dev/null
-+++ b/buildSrc/src/main/groovy/publishing.via.gradle
-@@ -0,0 +1,16 @@
-+publishing {
-+    repositories {
-+        maven {
-+            name = "Via"
-+            url = uri("https://repo.viaversion.com/")
-+
-+            credentials {
-+                username = System.getenv("via_username")
-+                password = System.getenv("via_password")
-+            }
-+            authentication {
-+                create(BasicAuthentication)
-+            }
-+        }
-+    }
-+}
 diff --git a/settings.gradle b/settings.gradle
 index 02405d0..da5cead 100644
 --- a/settings.gradle
