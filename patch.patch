@@ -1,8 +1,8 @@
 diff --git a/MCStructs-converter/build.gradle b/MCStructs-converter/build.gradle
-index c9b1361..b3a52bb 100644
+index 3ef6bf6..7365fbb 100644
 --- a/MCStructs-converter/build.gradle
 +++ b/MCStructs-converter/build.gradle
-@@ -3,4 +3,5 @@ dependencies {
+@@ -9,4 +9,5 @@ dependencies {
  
      api "com.viaversion:nbt:5.1.0"
      api project(":MCStructs-snbt")
@@ -400,8 +400,21 @@ index 8cddfda..b023f33 100644
      @Override
      public String toString() {
          return this.clazz.getSimpleName() + "{" + String.join(", ", this.fields) + "}";
+diff --git a/MCStructs-dialog/src/main/java/net/lenni0451/mcstructs/dialog/action/CustomAllAction.java b/MCStructs-dialog/src/main/java/net/lenni0451/mcstructs/dialog/action/CustomAllAction.java
+index e4965c1..eeec251 100644
+--- a/MCStructs-dialog/src/main/java/net/lenni0451/mcstructs/dialog/action/CustomAllAction.java
++++ b/MCStructs-dialog/src/main/java/net/lenni0451/mcstructs/dialog/action/CustomAllAction.java
+@@ -22,7 +22,7 @@ public class CustomAllAction implements DialogAction {
+     public ClickEvent toAction(Map<String, ValueGetter> valueGetters) {
+         CompoundTag tag = this.additions == null ? new CompoundTag() : this.additions.copy();
+         for (Map.Entry<String, ValueGetter> entry : valueGetters.entrySet()) {
+-            tag.add(entry.getKey(), entry.getValue().asTag());
++            tag.put(entry.getKey(), entry.getValue().asTag());
+         }
+         return ClickEvent.custom(this.id, tag);
+     }
 diff --git a/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java b/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
-index b993965..55c675a 100644
+index 0e67257..d55e1c6 100644
 --- a/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
 +++ b/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
 @@ -229,7 +229,7 @@ public class ItemComponents_v1_20_5 extends ItemComponentRegistry {
@@ -414,7 +427,7 @@ index b993965..55c675a 100644
                              }, list -> {
                                  Map<String, List<GameProfile.Property>> properties = new HashMap<>();
 diff --git a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java
-index 6386dde..a5b4ad1 100644
+index 28812cd..141740e 100644
 --- a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java
 +++ b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java
 @@ -35,7 +35,7 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
@@ -465,7 +478,7 @@ index 6386dde..a5b4ad1 100644
 +    }
  }
 diff --git a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java
-index 7681e9b..e95621f 100644
+index 3407406..993d6fd 100644
 --- a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java
 +++ b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java
 @@ -77,7 +77,7 @@ public class Test_v1_21_5 extends ItemComponentTest<ItemComponents_v1_21_5> {
@@ -914,74 +927,61 @@ index bf49579..4ef8e2b 100644
              "{\"hoverEvent\":{\"action\":\"show_item\",\"contents\":{\"id\":\"minecraft:test\",\"tag\":\"{test:\\\"test\\\"}\"}},\"text\":\"\"}",
              HoverEventAction.SHOW_ITEM.isUserDefinable()
      );
-diff --git a/build.gradle b/build.gradle
-index b550223..bc68093 100644
---- a/build.gradle
-+++ b/build.gradle
-@@ -6,7 +6,7 @@ subprojects {
-     apply plugin: "java-library"
-     apply plugin: "maven-publish"
-     apply plugin: "signing"
--    apply plugin: "checkstyle"
-+    //apply plugin: "checkstyle"
-     apply plugin: "net.lenni0451.template-processor"
+diff --git a/buildSrc/src/main/groovy/base.java.gradle b/buildSrc/src/main/groovy/base.java.gradle
+index 59279b6..fd3ffae 100644
+--- a/buildSrc/src/main/groovy/base.java.gradle
++++ b/buildSrc/src/main/groovy/base.java.gradle
+@@ -8,6 +8,7 @@ base {
  
-     base {
-@@ -63,17 +63,18 @@ subprojects {
-     publishing {
-         repositories {
-             maven {
--                name = "reposilite"
--                def releasesUrl = "https://maven.lenni0451.net/releases"
--                def snapshotsUrl = "https://maven.lenni0451.net/snapshots"
--                url = project.maven_version.endsWith("SNAPSHOT") ? snapshotsUrl : releasesUrl
-+                name = "Via"
-+                url = uri("https://repo.viaversion.com/")
-+                credentials {
-+                    username = System.getenv("via_username")
-+                    password = System.getenv("via_password")
-+                }
+ repositories {
+     mavenCentral()
++    maven {url = "https://repo.viaversion.com/" }
+ }
  
--                credentials(PasswordCredentials)
-                 authentication {
--                    basic(BasicAuthentication)
-+                    create(BasicAuthentication)
-                 }
-             }
--            maven {
-+            /*maven {
-                 name = "ossrh"
-                 def releasesUrl = "https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/"
-                 def snapshotsUrl = "https://s01.oss.sonatype.org/content/repositories/snapshots/"
-@@ -83,7 +84,7 @@ subprojects {
-                 authentication {
-                     basic(BasicAuthentication)
-                 }
--            }
-+            }*/
-         }
-         publications {
-             maven(MavenPublication) {
-@@ -118,10 +119,10 @@ subprojects {
-         }
-     }
+ jar {
+diff --git a/buildSrc/src/main/groovy/project.defaults.gradle b/buildSrc/src/main/groovy/project.defaults.gradle
+index 08a9462..6a85f8a 100644
+--- a/buildSrc/src/main/groovy/project.defaults.gradle
++++ b/buildSrc/src/main/groovy/project.defaults.gradle
+@@ -1,10 +1,9 @@
+ plugins {
+     id "java-library"
+     id "base.java"
+-    id "base.checkstyle"
+     id "base.junit"
+     id "base.maven_publish"
+-    id "publishing.aggregating_publisher"
++    id "publishing.via"
+ }
  
--    checkstyle {
--        toolVersion = "9.3" //Latest version for Java 8
--        configFile = rootProject.file("config/checkstyle/checkstyle.xml")
--    }
-+//    checkstyle {
-+//        toolVersion = "9.3" //Latest version for Java 8
-+//        configFile = rootProject.file("config/checkstyle/checkstyle.xml")
-+//    }
- 
-     signing {
-         setRequired false
+ dependencies {
+diff --git a/buildSrc/src/main/groovy/publishing.via.gradle b/buildSrc/src/main/groovy/publishing.via.gradle
+new file mode 100644
+index 0000000..0b95355
+--- /dev/null
++++ b/buildSrc/src/main/groovy/publishing.via.gradle
+@@ -0,0 +1,16 @@
++publishing {
++    repositories {
++        maven {
++            name = "Via"
++            url = uri("https://repo.viaversion.com/")
++
++            credentials {
++                username = System.getenv("via_username")
++                password = System.getenv("via_password")
++            }
++            authentication {
++                create(BasicAuthentication)
++            }
++        }
++    }
++}
 diff --git a/settings.gradle b/settings.gradle
-index cef78b0..6deaf45 100644
+index 02405d0..da5cead 100644
 --- a/settings.gradle
 +++ b/settings.gradle
-@@ -11,11 +11,8 @@ plugins {
+@@ -11,13 +11,10 @@ plugins {
  
  rootProject.name = "MCStructs"
  
@@ -989,7 +989,9 @@ index cef78b0..6deaf45 100644
  include(":MCStructs-converter")
  include(":MCStructs-core")
 -include(":MCStructs-data")
+ include(":MCStructs-dialog")
  include(":MCStructs-itemcomponents")
 -include(":MCStructs-nbt")
+ include(":MCStructs-registry")
  include(":MCStructs-snbt")
  include(":MCStructs-text")

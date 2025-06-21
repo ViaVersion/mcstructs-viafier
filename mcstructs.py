@@ -97,6 +97,7 @@ def main():
     deep('MCStructs-text')
     deep('MCStructs-converter')
     deep('MCStructs-itemcomponents')
+    deep('MCStructs-dialog')
 
     # Apply additional manual changes
     apply_patch('../patch.patch')
