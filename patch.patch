@@ -813,7 +813,7 @@ index 91a19f9..522b204 100644
      }
  
 diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-index cce5edf..7592422 100644
+index cce5edf..89c73f7 100644
 --- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
 +++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
 @@ -52,10 +52,18 @@ class TextComponentCodecTest {
@@ -832,7 +832,7 @@ index cce5edf..7592422 100644
 +        tag.put("display", display);
 +        return tag;
 +    }
-+    
++
      @ParameterizedTest
      @FieldSource("codecs")
      void serializeDeserializeJson(final TextComponentCodec codec) {
@@ -928,7 +928,7 @@ index bf49579..4ef8e2b 100644
              HoverEventAction.SHOW_ITEM.isUserDefinable()
      );
 diff --git a/buildSrc/build.gradle b/buildSrc/build.gradle
-index e1c034f..5d434df 100644
+index e1c034f..1347569 100644
 --- a/buildSrc/build.gradle
 +++ b/buildSrc/build.gradle
 @@ -5,3 +5,7 @@ plugins {
@@ -939,7 +939,6 @@ index e1c034f..5d434df 100644
 +dependencies {
 +    implementation("com.gradleup.shadow:shadow-gradle-plugin:8.3.6")
 +}
-\ No newline at end of file
 diff --git a/buildSrc/src/main/groovy/base.java.gradle b/buildSrc/src/main/groovy/base.java.gradle
 index 59279b6..fd3ffae 100644
 --- a/buildSrc/src/main/groovy/base.java.gradle
@@ -976,7 +975,7 @@ index 3def688..68f2ff5 100644
              pom {
                  name = project.name
 diff --git a/buildSrc/src/main/groovy/project.defaults.gradle b/buildSrc/src/main/groovy/project.defaults.gradle
-index 08a9462..e2914a1 100644
+index 08a9462..ed39efb 100644
 --- a/buildSrc/src/main/groovy/project.defaults.gradle
 +++ b/buildSrc/src/main/groovy/project.defaults.gradle
 @@ -1,10 +1,10 @@
@@ -1005,7 +1004,28 @@ index 08a9462..e2914a1 100644
 +    relocate("net.lenni0451.mcstructs", "com.viaversion.viaversion.libs.mcstructs")
 +}
 +build.dependsOn(shadowJar)
-\ No newline at end of file
+diff --git a/buildSrc/src/main/groovy/publishing.via.gradle b/buildSrc/src/main/groovy/publishing.via.gradle
+new file mode 100644
+index 0000000..0b95355
+--- /dev/null
++++ b/buildSrc/src/main/groovy/publishing.via.gradle
+@@ -0,0 +1,16 @@
++publishing {
++    repositories {
++        maven {
++            name = "Via"
++            url = uri("https://repo.viaversion.com/")
++
++            credentials {
++                username = System.getenv("via_username")
++                password = System.getenv("via_password")
++            }
++            authentication {
++                create(BasicAuthentication)
++            }
++        }
++    }
++}
 diff --git a/settings.gradle b/settings.gradle
 index 02405d0..da5cead 100644
 --- a/settings.gradle
