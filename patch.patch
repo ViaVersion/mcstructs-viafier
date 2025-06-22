@@ -8,10 +8,10 @@ index 3ef6bf6..7365fbb 100644
      api project(":MCStructs-snbt")
 +    api project(":MCStructs-core")
  }
-diff --git a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
-index a0fc9b9..f7a907f 100644
---- a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
-+++ b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
+diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
+index 81535c3..534531e 100644
+--- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
++++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
 @@ -32,34 +32,33 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
      public <N> N convertTo(DataConverter<N> to, @Nullable Tag element) {
          if (to == this) return (N) element;
@@ -119,10 +119,10 @@ index a0fc9b9..f7a907f 100644
          } else {
              return Result.unexpected(element, ListTag.class, NumberArrayTag.class);
          }
-diff --git a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
-index 3b72961..6756015 100644
---- a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
-+++ b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
+diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
+index 76c036d..821b386 100644
+--- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
++++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
 @@ -31,13 +31,13 @@ public class NbtConverter_v1_21_5 extends NbtConverter_v1_20_3 {
          if (list == null) {
              listType = ListType.LIST;
@@ -149,10 +149,10 @@ index 3b72961..6756015 100644
          if (tags.isEmpty()) return Result.success(new ListTag<>());
  
          if (listType.equals(ListType.BYTE)) {
-diff --git a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/CodecException.java b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/CodecException.java
-index 82652f9..8e930f9 100644
---- a/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/CodecException.java
-+++ b/MCStructs-converter/src/main/java/net/lenni0451/mcstructs/converter/model/CodecException.java
+diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/model/CodecException.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/model/CodecException.java
+index 865168d..b87cfe2 100644
+--- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/model/CodecException.java
++++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/model/CodecException.java
 @@ -10,7 +10,7 @@ public class CodecException extends RuntimeException {
      }
  
@@ -162,10 +162,10 @@ index 82652f9..8e930f9 100644
          return this;
      }
  
-diff --git a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java
-index 28f713c..9924347 100644
---- a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java
-+++ b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/ConverterTest.java
+diff --git a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/ConverterTest.java b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/ConverterTest.java
+index 0f32244..f64c3fe 100644
+--- a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/ConverterTest.java
++++ b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/ConverterTest.java
 @@ -31,7 +31,7 @@ public class ConverterTest {
      <T> void testList(final DataConverter<T> converter) {
          List<T> list = converter.asList(this.createList(converter)).get();
@@ -250,10 +250,10 @@ index 28f713c..9924347 100644
  
          assertEquals(expected, array);
      }
-diff --git a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/NbtConverterTest.java b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/NbtConverterTest.java
-index 7e9ce0b..99ae3b8 100644
---- a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/NbtConverterTest.java
-+++ b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/NbtConverterTest.java
+diff --git a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/NbtConverterTest.java b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/NbtConverterTest.java
+index f1cadf5..bb94740 100644
+--- a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/NbtConverterTest.java
++++ b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/NbtConverterTest.java
 @@ -17,16 +17,25 @@ public class NbtConverterTest {
  
      @Test
@@ -328,10 +328,10 @@ index 7e9ce0b..99ae3b8 100644
          }
          return out;
      }
-diff --git a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/InlinedMapCodecTest.java b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/InlinedMapCodecTest.java
-index d442d6b..e5ea039 100644
---- a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/InlinedMapCodecTest.java
-+++ b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/InlinedMapCodecTest.java
+diff --git a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/InlinedMapCodecTest.java b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/InlinedMapCodecTest.java
+index 6e27c62..fe31d47 100644
+--- a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/InlinedMapCodecTest.java
++++ b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/InlinedMapCodecTest.java
 @@ -29,21 +29,23 @@ public class InlinedMapCodecTest {
  
      @Test
@@ -365,10 +365,10 @@ index d442d6b..e5ea039 100644
  
          assertThrows(Throwable.class, () -> codec.deserialize(NbtConverter_v1_20_3.INSTANCE, tag).get());
      }
-diff --git a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/RecursiveCodecTest.java b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/RecursiveCodecTest.java
-index 5ee920e..e121e4c 100644
---- a/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/RecursiveCodecTest.java
-+++ b/MCStructs-converter/src/test/java/net/lenni0451/mcstructs/converter/codec/RecursiveCodecTest.java
+diff --git a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/RecursiveCodecTest.java b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/RecursiveCodecTest.java
+index 038ca48..49dfc04 100644
+--- a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/RecursiveCodecTest.java
++++ b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/RecursiveCodecTest.java
 @@ -25,7 +25,10 @@ public class RecursiveCodecTest {
      void test() {
          CompoundTag tag = new CompoundTag();
@@ -381,10 +381,10 @@ index 5ee920e..e121e4c 100644
  
          Result<Impl> result = IMPL.deserialize(NbtConverter_v1_20_3.INSTANCE, tag);
          assertTrue(result.isSuccessful());
-diff --git a/MCStructs-core/src/main/java/net/lenni0451/mcstructs/core/utils/ToString.java b/MCStructs-core/src/main/java/net/lenni0451/mcstructs/core/utils/ToString.java
-index 8cddfda..b023f33 100644
---- a/MCStructs-core/src/main/java/net/lenni0451/mcstructs/core/utils/ToString.java
-+++ b/MCStructs-core/src/main/java/net/lenni0451/mcstructs/core/utils/ToString.java
+diff --git a/MCStructs-core/src/main/java/com/viaversion/viaversion/libs/mcstructs/core/utils/ToString.java b/MCStructs-core/src/main/java/com/viaversion/viaversion/libs/mcstructs/core/utils/ToString.java
+index d87ff84..b2c889e 100644
+--- a/MCStructs-core/src/main/java/com/viaversion/viaversion/libs/mcstructs/core/utils/ToString.java
++++ b/MCStructs-core/src/main/java/com/viaversion/viaversion/libs/mcstructs/core/utils/ToString.java
 @@ -41,6 +41,14 @@ public class ToString {
          return this;
      }
@@ -400,10 +400,10 @@ index 8cddfda..b023f33 100644
      @Override
      public String toString() {
          return this.clazz.getSimpleName() + "{" + String.join(", ", this.fields) + "}";
-diff --git a/MCStructs-dialog/src/main/java/net/lenni0451/mcstructs/dialog/action/CustomAllAction.java b/MCStructs-dialog/src/main/java/net/lenni0451/mcstructs/dialog/action/CustomAllAction.java
-index e4965c1..eeec251 100644
---- a/MCStructs-dialog/src/main/java/net/lenni0451/mcstructs/dialog/action/CustomAllAction.java
-+++ b/MCStructs-dialog/src/main/java/net/lenni0451/mcstructs/dialog/action/CustomAllAction.java
+diff --git a/MCStructs-dialog/src/main/java/com/viaversion/viaversion/libs/mcstructs/dialog/action/CustomAllAction.java b/MCStructs-dialog/src/main/java/com/viaversion/viaversion/libs/mcstructs/dialog/action/CustomAllAction.java
+index 3ffed7c..351b275 100644
+--- a/MCStructs-dialog/src/main/java/com/viaversion/viaversion/libs/mcstructs/dialog/action/CustomAllAction.java
++++ b/MCStructs-dialog/src/main/java/com/viaversion/viaversion/libs/mcstructs/dialog/action/CustomAllAction.java
 @@ -22,7 +22,7 @@ public class CustomAllAction implements DialogAction {
      public ClickEvent toAction(Map<String, ValueGetter> valueGetters) {
          CompoundTag tag = this.additions == null ? new CompoundTag() : this.additions.copy();
@@ -413,10 +413,10 @@ index e4965c1..eeec251 100644
          }
          return ClickEvent.custom(this.id, tag);
      }
-diff --git a/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java b/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
-index 0e67257..d55e1c6 100644
---- a/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
-+++ b/MCStructs-itemcomponents/src/main/java/net/lenni0451/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
+diff --git a/MCStructs-itemcomponents/src/main/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java b/MCStructs-itemcomponents/src/main/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
+index 1aa4df1..8d19ca8 100644
+--- a/MCStructs-itemcomponents/src/main/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
++++ b/MCStructs-itemcomponents/src/main/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
 @@ -229,7 +229,7 @@ public class ItemComponents_v1_20_5 extends ItemComponentRegistry {
                                      GameProfile.Property::new
                              ).listOf().map(properties -> {
@@ -426,10 +426,10 @@ index 0e67257..d55e1c6 100644
                                  return list;
                              }, list -> {
                                  Map<String, List<GameProfile.Property>> properties = new HashMap<>();
-diff --git a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java
-index 28812cd..141740e 100644
---- a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java
-+++ b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_20_5.java
+diff --git a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
+index 56b5b58..4fda66f 100644
+--- a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
++++ b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
 @@ -35,7 +35,7 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
  
      @Override
@@ -477,10 +477,10 @@ index 28812cd..141740e 100644
 +        return tag;
 +    }
  }
-diff --git a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java
-index 3407406..993d6fd 100644
---- a/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java
-+++ b/MCStructs-itemcomponents/src/test/java/net/lenni0451/mcstructs/itemcomponents/versions/Test_v1_21_5.java
+diff --git a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java
+index baa49ab..66bcf5a 100644
+--- a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java
++++ b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java
 @@ -77,7 +77,7 @@ public class Test_v1_21_5 extends ItemComponentTest<ItemComponents_v1_21_5> {
              valueMatchers.put("test", new Types_v1_20_5.BlockPredicate.ValueMatcher("val"));
              valueMatchers.put("test2", new Types_v1_20_5.BlockPredicate.ValueMatcher("min val", null));
@@ -490,10 +490,10 @@ index 3407406..993d6fd 100644
          copy(registry.CAN_BREAK, registry.CAN_PLACE_ON);
          register(registry.ENCHANTMENTS, init(() -> {
              Map<RegistryEntry, Integer> enchantments = new HashMap<>();
-diff --git a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-index fdbd54d..277b837 100644
---- a/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-+++ b/MCStructs-snbt/src/main/java/net/lenni0451/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
+diff --git a/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java b/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
+index 4ebec9e..5aa146d 100644
+--- a/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
++++ b/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
 @@ -95,10 +95,28 @@ public class SNbtDeserializer_v1_12 implements SNbtDeserializer<CompoundTag> {
          reader.read();
          reader.skipWhitespaces();
@@ -527,10 +527,10 @@ index fdbd54d..277b837 100644
      }
  
      protected Tag readValue(final StringReader_v1_12 reader) throws SNbtDeserializeException {
-diff --git a/MCStructs-snbt/src/test/java/net/lenni0451/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java b/MCStructs-snbt/src/test/java/net/lenni0451/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
-index 0c22c87..02473b1 100644
---- a/MCStructs-snbt/src/test/java/net/lenni0451/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
-+++ b/MCStructs-snbt/src/test/java/net/lenni0451/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
+diff --git a/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java b/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
+index eb05c0e..a0fd06c 100644
+--- a/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
++++ b/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
 @@ -46,14 +46,14 @@ class SNbtDeserializer_v1_21_5Test extends SNbtDeserializerTest {
          executeTests(SNbt.V1_21_5, expectedResults);
      }
@@ -555,10 +555,10 @@ index 0c22c87..02473b1 100644
 +    //}
  
  }
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
-index 6eb1a32..354d80e 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/TextComponent.java
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
+index eda8782..9dc012e 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 @@ -31,13 +31,20 @@ import java.util.function.Consumer;
   * - {@link EntityNbtSource}<br>
   * - {@link StorageNbtSource}
@@ -642,10 +642,10 @@ index 6eb1a32..354d80e 100644
  
      @Override
      public abstract TextComponent copy();
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
-index e66a517..a66dbdc 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/components/TranslationComponent.java
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
+index 03f980a..da5b158 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
 @@ -150,6 +150,31 @@ public class TranslationComponent extends TextComponent {
      public String asSingleString() {
          return this.resolveIntoComponents().asUnformattedString();
@@ -678,10 +678,10 @@ index e66a517..a66dbdc 100644
  
      @Override
      public TextComponent copy() {
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java
-index 8d75bf5..e8a5621 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/stringformat/StringFormat.java
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java
+index 1850ab1..10924f9 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java
 @@ -181,6 +181,7 @@ public abstract class StringFormat {
          return TextComponent.of(components);
      }
@@ -709,10 +709,10 @@ index 8d75bf5..e8a5621 100644
                  for (int i = 0; i < translation.getSiblings().size(); i++) {
                      texts.add(i + 1, translation.getSiblings().get(i));
                  }
-diff --git a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
-index 91a19f9..522b204 100644
---- a/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
-+++ b/MCStructs-text/src/main/java/net/lenni0451/mcstructs/text/utils/JsonNbtConverter.java
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/utils/JsonNbtConverter.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/utils/JsonNbtConverter.java
+index 121af7f..db5db2c 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/utils/JsonNbtConverter.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/utils/JsonNbtConverter.java
 @@ -25,23 +25,15 @@ public class JsonNbtConverter {
      @Nullable
      public static JsonElement toJson(@Nullable final Tag tag) {
@@ -812,10 +812,10 @@ index 91a19f9..522b204 100644
          return current;
      }
  
-diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-index cce5edf..7592422 100644
---- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
-+++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/TextComponentCodecTest.java
+diff --git a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
+index fd5b024..d1ae744 100644
+--- a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
++++ b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
 @@ -52,10 +52,18 @@ class TextComponentCodecTest {
              .append(new NbtComponent("raw", true, new StringComponent("separator"), new EntityNbtSource("selector")))
              .append(new NbtComponent("raw", true, new StringComponent("separator"), new StorageNbtSource(Identifier.of("namespace", "id"))))
@@ -832,7 +832,7 @@ index cce5edf..7592422 100644
 +        tag.put("display", display);
 +        return tag;
 +    }
-+    
++
      @ParameterizedTest
      @FieldSource("codecs")
      void serializeDeserializeJson(final TextComponentCodec codec) {
@@ -909,10 +909,10 @@ index cce5edf..7592422 100644
          TextComponent component = new TranslationComponent("test", (byte) 1, (byte) 2, (byte) 3)
                  .append(new TranslationComponent("test", 1, 2, 3))
                  .append(new TranslationComponent("test", 1L, 2L, 3L))
-diff --git a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java
-index bf49579..4ef8e2b 100644
---- a/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java
-+++ b/MCStructs-text/src/test/java/net/lenni0451/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java
+diff --git a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java
+index dea74a4..275fc92 100644
+--- a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java
++++ b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/events/TextComponentLegacyEventsTest.java
 @@ -76,8 +76,12 @@ public abstract class TextComponentLegacyEventsTest {
              "{\"hoverEvent\":{\"action\":\"show_item\",\"value\":\"test\"},\"text\":\"\"}",
              HoverEventAction.SHOW_ENTITY.isUserDefinable()

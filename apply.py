@@ -2,6 +2,7 @@ import os
 import re
 import subprocess
 import argparse
+import shutil
 
 via_nbt_version = '5.1.0'
 version_prefix = '5'
@@ -32,6 +33,13 @@ replacements = {
 
     'import static net.lenni0451.mcstructs.nbt.utils.NbtCodecUtils.MARKER_KEY;': '//',
     'MARKER_KEY': '""',
+
+    # Package changes
+    'package net.lenni0451.mcstructs': 'package com.viaversion.viaversion.libs.mcstructs',
+    'import net.lenni0451.mcstructs': 'import com.viaversion.viaversion.libs.mcstructs',
+    'import static net.lenni0451.mcstructs': 'import static com.viaversion.viaversion.libs.mcstructs',
+    '"target": "net/lenni0451/mcstructs/converter/codec/map/MapCodecMerger.java"': '"target": "com/viaversion/viaversion/libs/mcstructs/converter/codec/map/MapCodecMerger.java"',
+    'net.lenni0451.mcstructs.text.TextComponent': 'com.viaversion.viaversion.libs.mcstructs.text.TextComponent', # randomly fully qualified
 
     # A special one
     '            if (!list.canAdd(tag)) throw new SNbtDeserializeException("Unable to insert " + tag.getClass().getSimpleName() + " into ListTag of type " + list.getType().name());': '',
@@ -100,11 +108,13 @@ def main():
 
     handle_file('build.gradle')
     handle_file('gradle.properties')
-    deep('MCStructs-snbt')
-    deep('MCStructs-text')
-    deep('MCStructs-converter')
-    deep('MCStructs-itemcomponents')
-    deep('MCStructs-dialog')
+    handle_dir('MCStructs-converter')
+    handle_dir('MCStructs-core')
+    handle_dir('MCStructs-dialog')
+    handle_dir('MCStructs-itemcomponents')
+    handle_dir('MCStructs-registry')
+    handle_dir('MCStructs-snbt')
+    handle_dir('MCStructs-text')
 
     # Apply additional manual changes
     if args.dev_mode:
@@ -119,7 +129,7 @@ def apply_patch(patch_file):
     try:
         # git add . && git commit -m "a" && git apply --reject --ignore-whitespace --ignore-space-change ../patch.patch
         # git diff HEAD > ../patch.patch
-        subprocess.run(['git', 'apply', '--reject', '--ignore-whitespace', '--ignore-space-change', patch_file],
+        subprocess.run(['git', 'apply', '--reject', '--whitespace=fix', '--ignore-space-change', patch_file],
                        check=True)
         subprocess.run(['git', 'add', '.'], check=True)
         print('Applied patch')
@@ -127,12 +137,28 @@ def apply_patch(patch_file):
         print(f'Error applying patch: {e}')
 
 
-def deep(path):
+def relocate_package_dirs(src_root):
+    old_path = os.path.join(src_root, *'net.lenni0451.mcstructs'.split('.'))
+    new_path = os.path.join(src_root, *'com.viaversion.viaversion.libs.mcstructs'.split('.'))
+
+    if not os.path.isdir(old_path):
+        return
+
+    os.makedirs(os.path.dirname(new_path), exist_ok=True)
+    shutil.move(old_path, new_path)
+
+
+def handle_dir(path):
+    relocate_package_dirs(path + '/src/main/java')
+    relocate_package_dirs(path + '/src/test/java')
+    handle_dir_deep(path)
+
+def handle_dir_deep(path):
     for p in os.listdir(path):
         p = os.path.join(path, p)
         if os.path.isdir(p):
-            deep(p)
-        elif p.endswith(".java") or p.endswith(".gradle"):
+            handle_dir_deep(p)
+        elif p.endswith('.java') or p.endswith('.gradle') or p.endswith('.mustache'):
             handle_file(p)
 
 
