@@ -9,9 +9,20 @@ git submodule update --init
 Then you can run the Python script to apply the automated updates.
 
 ```bash
-py mcstructs.py
+py apply.py
 cd MCStructs
 gradlew test
+```
+
+## Development
+
+Use `-d` (`--dev-mode`) to prepare for doing patch changes:
+```bash
+py apply.py -d
+```
+Run this to rebuild the patch:
+```bash
+py rebuild.py
 ```
 
 ## Dependency

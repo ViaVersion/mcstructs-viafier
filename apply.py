@@ -1,6 +1,7 @@
 import os
 import re
 import subprocess
+import argparse
 
 via_nbt_version = '5.1.0'
 version_prefix = '5'
@@ -89,7 +90,13 @@ extra_replacements = {
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--dev-mode', action='store_true')
+    args = parser.parse_args()
+
     os.chdir('MCStructs')
+    subprocess.run(['git', 'add', '.'], check=True)
+    subprocess.run(['git', 'reset', '--hard', 'origin/main'], check=True)
 
     handle_file('build.gradle')
     handle_file('gradle.properties')
@@ -100,7 +107,12 @@ def main():
     deep('MCStructs-dialog')
 
     # Apply additional manual changes
-    apply_patch('../patch.patch')
+    if args.dev_mode:
+        subprocess.run(['git', 'add', '.'], check=True)
+        subprocess.run(['git', 'commit', '-am', 'Automated replacements'], check=True)
+        apply_patch('../patch.patch')
+    else:
+        apply_patch('../patch.patch')
 
 
 def apply_patch(patch_file):
@@ -109,6 +121,7 @@ def apply_patch(patch_file):
         # git diff HEAD > ../patch.patch
         subprocess.run(['git', 'apply', '--reject', '--ignore-whitespace', '--ignore-space-change', patch_file],
                        check=True)
+        subprocess.run(['git', 'add', '.'], check=True)
         print('Applied patch')
     except subprocess.CalledProcessError as e:
         print(f'Error applying patch: {e}')

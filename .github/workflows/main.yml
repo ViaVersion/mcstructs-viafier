@@ -32,7 +32,7 @@ jobs:
         if: steps.check_changes.outputs.changes == 'y'
         run: |
           git submodule update --remote
-          python mcstructs.py
+          python apply.py
 
       - name: Setup Java JDK
         if: steps.check_changes.outputs.changes == 'y'

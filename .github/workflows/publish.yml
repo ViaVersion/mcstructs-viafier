@@ -21,7 +21,7 @@ jobs:
       - name: Update and patch mcstructs
         run: |
           git submodule update --remote
-          python mcstructs.py
+          python apply.py
 
       - name: Setup Java JDK
         uses: actions/setup-java@v4
