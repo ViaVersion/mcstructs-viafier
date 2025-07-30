@@ -8,11 +8,92 @@ index 3ef6bf6..7365fbb 100644
      api project(":MCStructs-snbt")
 +    api project(":MCStructs-core")
  }
+diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java
+index 48d63be..6b37a2c 100644
+--- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java
++++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java
+@@ -8,6 +8,16 @@ import java.util.*;
+ 
+ public interface DataConverter<T> {
+ 
++    @Nullable
++    default java.util.function.Consumer<String> currentConsumer() {
++        return null;
++    }
++    default void setCurrentConsumer(java.util.function.Consumer<String> consumer) {
++    }
++    default DataConverter<T> forkIfDefault() {
++        return this;
++    }
++
+     <N> N convertTo(final DataConverter<N> converter, @Nullable final T element);
+ 
+     default <N> T convertFrom(final DataConverter<N> converter, @Nullable final N element) {
+@@ -152,6 +162,11 @@ public interface DataConverter<T> {
+     }
+ 
+     default <O> DataConverter<O> fork(final DataConverter<O> other) {
++        if (currentConsumer() != null) {
++            final DataConverter<O> fork = other.forkIfDefault();
++            fork.setCurrentConsumer(currentConsumer());
++            return fork;
++        }
+         return other;
+     }
+ 
+diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/JsonConverter_v1_20_3.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/JsonConverter_v1_20_3.java
+index 9d71b33..508b3db 100644
+--- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/JsonConverter_v1_20_3.java
++++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/JsonConverter_v1_20_3.java
+@@ -15,6 +15,21 @@ public class JsonConverter_v1_20_3 implements DataConverter<JsonElement> {
+ 
+     public static final JsonConverter_v1_20_3 INSTANCE = new JsonConverter_v1_20_3();
+ 
++    private java.util.function.Consumer<String> stringConsumer;
++    @Override
++    @Nullable
++    public java.util.function.Consumer<String> currentConsumer() {
++        return stringConsumer;
++    }
++    @Override
++    public void setCurrentConsumer(java.util.function.Consumer<String> consumer) {
++        this.stringConsumer = consumer;
++    }
++    @Override
++    public DataConverter<JsonElement> forkIfDefault() {
++        return this == INSTANCE ? new JsonConverter_v1_20_3() : this;
++    }
++
+     @Override
+     public <N> N convertTo(DataConverter<N> to, @Nullable JsonElement element) {
+         if (to == this) return (N) element;
 diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
-index 81535c3..534531e 100644
+index 81535c3..b0cb29a 100644
 --- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
 +++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
-@@ -32,34 +32,33 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+@@ -18,6 +18,21 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+ 
+     public static final NbtConverter_v1_20_3 INSTANCE = new NbtConverter_v1_20_3();
+ 
++    private java.util.function.Consumer<String> stringConsumer;
++    @Override
++    @Nullable
++    public java.util.function.Consumer<String> currentConsumer() {
++        return stringConsumer;
++    }
++    @Override
++    public void setCurrentConsumer(java.util.function.Consumer<String> consumer) {
++        this.stringConsumer = consumer;
++    }
++    @Override
++    public DataConverter<Tag> forkIfDefault() {
++        return this == INSTANCE ? new NbtConverter_v1_20_3() : this;
++    }
++
+     private final SNbt<CompoundTag> sNbt;
+ 
+     public NbtConverter_v1_20_3() {
+@@ -32,34 +47,33 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
      public <N> N convertTo(DataConverter<N> to, @Nullable Tag element) {
          if (to == this) return (N) element;
          if (element == null) return to.empty();
@@ -61,7 +142,7 @@ index 81535c3..534531e 100644
                  throw new IllegalArgumentException("Unknown Nbt type: " + element);
          }
      }
-@@ -71,7 +70,7 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+@@ -71,7 +85,7 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
  
      @Override
      public Result<Boolean> asBoolean(Tag element) {
@@ -70,7 +151,7 @@ index 81535c3..534531e 100644
      }
  
      @Override
-@@ -149,13 +148,13 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+@@ -149,13 +163,13 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
          Result<List<Tag>> listResult = this.asList(list);
          if (listResult.isError()) return listResult.mapError();
          List<Tag> elements = new ArrayList<>(listResult.get());
@@ -86,7 +167,7 @@ index 81535c3..534531e 100644
          }
  
          if (listType == null) {
-@@ -172,12 +171,16 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+@@ -172,12 +186,16 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
              long[] longs = new long[elements.size()];
              for (int i = 0; i < elements.size(); i++) longs[i] = ((LongTag) elements.get(i)).asLong();
              return Result.success(new LongArrayTag(longs));
@@ -105,7 +186,7 @@ index 81535c3..534531e 100644
              }
              return Result.success(listTag);
          } else {
-@@ -198,11 +201,11 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
+@@ -198,11 +216,11 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
                      else list.add(tag);
                  }
              } else {
@@ -119,11 +200,39 @@ index 81535c3..534531e 100644
          } else {
              return Result.unexpected(element, ListTag.class, NumberArrayTag.class);
          }
+diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_5/JsonConverter_v1_20_5.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_5/JsonConverter_v1_20_5.java
+index 1a84e09..31e1d03 100644
+--- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_5/JsonConverter_v1_20_5.java
++++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_5/JsonConverter_v1_20_5.java
+@@ -9,6 +9,11 @@ public class JsonConverter_v1_20_5 extends JsonConverter_v1_20_3 {
+ 
+     public static final JsonConverter_v1_20_5 INSTANCE = new JsonConverter_v1_20_5();
+ 
++    @Override
++    public com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<JsonElement> forkIfDefault() {
++        return this == INSTANCE ? new JsonConverter_v1_20_3() : this;
++    }
++
+     @Override
+     public Result<Boolean> asBoolean(JsonElement element) {
+         if (element.isJsonPrimitive()) {
 diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
-index 76c036d..821b386 100644
+index 76c036d..1025119 100644
 --- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
 +++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_21_5/NbtConverter_v1_21_5.java
-@@ -31,13 +31,13 @@ public class NbtConverter_v1_21_5 extends NbtConverter_v1_20_3 {
+@@ -17,6 +17,11 @@ public class NbtConverter_v1_21_5 extends NbtConverter_v1_20_3 {
+ 
+     public static final NbtConverter_v1_21_5 INSTANCE = new NbtConverter_v1_21_5();
+ 
++    @Override
++    public com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<Tag> forkIfDefault() {
++        return this == INSTANCE ? new NbtConverter_v1_21_5() : this;
++    }
++
+     public NbtConverter_v1_21_5() {
+         this(SNbt.V1_21_5);
+     }
+@@ -31,13 +36,13 @@ public class NbtConverter_v1_21_5 extends NbtConverter_v1_20_3 {
          if (list == null) {
              listType = ListType.LIST;
          } else if (list instanceof ByteArrayTag) {
@@ -140,7 +249,7 @@ index 76c036d..821b386 100644
              else listType = ListType.LONG;
          } else if (list instanceof ListTag) {
              ListTag<?> listTag = ((ListTag) list);
-@@ -50,7 +50,7 @@ public class NbtConverter_v1_21_5 extends NbtConverter_v1_20_3 {
+@@ -50,7 +55,7 @@ public class NbtConverter_v1_21_5 extends NbtConverter_v1_20_3 {
          Result<List<Tag>> listResult = list == null ? Result.success(new ArrayList<>()) : this.asList(list);
          if (listResult.isError()) return listResult.mapError();
          List<Tag> tags = listResult.get();
@@ -556,7 +665,7 @@ index eb05c0e..a0fd06c 100644
  
  }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
-index eda8782..9dc012e 100644
+index eda8782..a4fccec 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 @@ -31,13 +31,20 @@ import java.util.function.Consumer;
@@ -603,7 +712,7 @@ index eda8782..9dc012e 100644
          return this;
      }
  
-@@ -199,15 +209,25 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -199,16 +209,34 @@ public abstract class TextComponent implements Copyable<TextComponent> {
          return component;
      }
  
@@ -613,49 +722,64 @@ index eda8782..9dc012e 100644
       */
      public String asUnformattedString() {
 -        StringBuilder out = new StringBuilder(this.asSingleString());
+-        if (this.siblings != null) {
+-            for (TextComponent sibling : this.siblings) out.append(sibling.asUnformattedString());
++        return asUnformattedString(null);
++    }
++    public String asUnformattedString(final com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<?> converter) {
 +        StringBuilder out = new StringBuilder();
-+        visit(s -> {
++        ComponentConsumer consumer = s -> {
 +            if (s.length() + out.length() > MAX_LEN) {
 +                throw new IllegalArgumentException("Too long");
 +            }
 +            out.append(s);
-+        });
-+        return out.toString();
-+    }
-+    public void visit(final Consumer<String> consumer) {
-+        this.asSingleString(consumer);
-         if (this.siblings != null) {
--            for (TextComponent sibling : this.siblings) out.append(sibling.asUnformattedString());
-+            for (TextComponent sibling : this.siblings) sibling.visit(consumer);
++        };
++        if (converter.currentConsumer() != null) {
++            consumer = ((ComponentConsumer) converter.currentConsumer()).withConsumer(consumer);
++            converter.setCurrentConsumer(consumer);
          }
--        return out.toString();
++        visit(converter, consumer);
+         return out.toString();
      }
++    public void visit(final com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<?> converter, final ComponentConsumer consumer) {
++        this.asSingleString(converter, consumer);
++        if (this.siblings != null) {
++            for (TextComponent sibling : this.siblings) sibling.visit(converter, consumer);
++        }
++    }
  
      /**
-@@ -223,6 +243,9 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+      * @return A legacy formatted string representation of this component
+@@ -223,6 +251,15 @@ public abstract class TextComponent implements Copyable<TextComponent> {
       * @return An unformatted string representation of this component
       */
      public abstract String asSingleString();
-+    public void asSingleString(final Consumer<String> consumer) {
++    public void asSingleString(final com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<?> converter, final ComponentConsumer consumer) {
 +        consumer.accept(this.asSingleString());
++    }
++    @FunctionalInterface
++    public interface ComponentConsumer extends Consumer<String> {
++        default ComponentConsumer withConsumer(final ComponentConsumer consumer) {
++            return consumer;
++        }
 +    }
  
      @Override
      public abstract TextComponent copy();
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
-index 03f980a..da5b158 100644
+index 03f980a..b54a5c3 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
-@@ -150,6 +150,31 @@ public class TranslationComponent extends TextComponent {
+@@ -150,6 +150,45 @@ public class TranslationComponent extends TextComponent {
      public String asSingleString() {
          return this.resolveIntoComponents().asUnformattedString();
      }
-+    private static final class TranslatableContentConsumer implements java.util.function.Consumer<String> {
++    private static final class TranslatableContentConsumer implements ComponentConsumer {
 +        private static final IllegalArgumentException EX = new IllegalArgumentException("Too long");
-+        private final java.util.function.Consumer<String> runnable;
++        private final ComponentConsumer runnable;
 +        private int visited;
 +
-+        private TranslatableContentConsumer(final java.util.function.Consumer<String> runnable) {
++        private TranslatableContentConsumer(final ComponentConsumer runnable) {
 +            this.runnable = runnable;
 +        }
 +
@@ -666,23 +790,158 @@ index 03f980a..da5b158 100644
 +            }
 +            this.runnable.accept(s);
 +        }
++
++        @Override
++        public ComponentConsumer withConsumer(final ComponentConsumer consumer) {
++            final TranslatableContentConsumer newConsumer = new TranslatableContentConsumer(consumer);
++            newConsumer.visited = this.visited;
++            return newConsumer;
++        }
 +    }
 +    @Override
-+    public void asSingleString(final java.util.function.Consumer<String> consumer) {
++    public void asSingleString(final com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<?> converter, final ComponentConsumer consumer) {
 +        if (consumer instanceof TranslatableContentConsumer) {
-+            this.resolveIntoComponents().visit(consumer);
++            if (converter != null) {
++                converter.setCurrentConsumer(consumer);
++            }
++            this.resolveIntoComponents().visit(converter, consumer);
 +        } else {
-+            this.resolveIntoComponents().visit(new TranslatableContentConsumer(consumer));
++            final TranslatableContentConsumer translatableConsumer = new TranslatableContentConsumer(consumer);
++            if (converter != null) {
++                converter.setCurrentConsumer(translatableConsumer);
++            }
++            this.resolveIntoComponents().visit(converter, translatableConsumer);
 +        }
 +    }
  
      @Override
      public TextComponent copy() {
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java
+index da8f78e..2cd95d8 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java
+@@ -171,21 +171,28 @@ public class StyleCodecs_v1_20_3 {
+                     EntityHoverEvent.ModernHolder::new
+             ).mapCodec("contents").required().map(EntityHoverEvent::asModern, EntityHoverEvent::new);
+             public static final MapCodec<EntityHoverEvent> LEGACY_MAP_CODEC = createLegacy((converter, component) -> {
+-                try {
+-                    CompoundTag tag = SNbt.V1_14.deserialize(component.asUnformattedString());
+-                    JsonElement rawName = JsonParser.parseString((tag.get("name") instanceof StringTag ? ((StringTag) tag.get("name")).getValue() : ""));
+-                    TextComponent name = rawName == null ? null : TextCodecs_v1_20_3.TEXT.deserialize(converter.fork(JsonConverter_v1_20_3.INSTANCE), rawName).getOrThrow(JsonParseException::new);
+-                    Identifier type = Identifier.of((tag.get("type") instanceof StringTag ? ((StringTag) tag.get("type")).getValue() : ""));
+-                    if (!isValid(converter, type, TextVerifier_v1_20_3.class, TextVerifier_v1_20_3::verifyRegistryEntity)) {
+-                        return Result.error("Invalid entity: " + type);
+-                    }
+-                    UUID uuid = UUID.fromString((tag.get("id") instanceof StringTag ? ((StringTag) tag.get("id")).getValue() : ""));
+-                    return Result.success(new EntityHoverEvent(type, uuid, name));
+-                } catch (Throwable t) {
+-                    return Result.error(t);
+-                }
++                return getEntityHoverEventResult(converter, component, TextCodecs_v1_20_3.TEXT, JsonConverter_v1_20_3.INSTANCE);
+             });
+         }
+     }
+ 
++    public static Result<EntityHoverEvent> getEntityHoverEventResult(DataConverter<?> converter, TextComponent component, Codec<TextComponent> textCodec, JsonConverter_v1_20_3 jsonConverter) {
++        {
++            try {
++                converter = converter.forkIfDefault();
++                CompoundTag tag = SNbt.V1_14.deserialize(component.asUnformattedString(converter));
++                JsonElement rawName = JsonParser.parseString((tag.get("name") instanceof StringTag ? ((StringTag) tag.get("name")).getValue() : ""));
++                TextComponent name = rawName == null ? null : textCodec.deserialize(converter.fork(jsonConverter), rawName).getOrThrow(JsonParseException::new);
++                Identifier type = Identifier.of((tag.get("type") instanceof StringTag ? ((StringTag) tag.get("type")).getValue() : ""));
++                //if (!isValid(converter, type, TextVerifier_v1_20_3.class, TextVerifier_v1_20_3::verifyRegistryEntity)) {
++                //    return Result.error("Invalid entity: " + type);
++                //}
++                UUID uuid = UUID.fromString((tag.get("id") instanceof StringTag ? ((StringTag) tag.get("id")).getValue() : ""));
++                return Result.success(new EntityHoverEvent(type, uuid, name));
++            } catch (Throwable t) {
++                return Result.error(t);
++            }
++        }
++    }
++
+ }
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_5/StyleCodecs_v1_20_5.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_5/StyleCodecs_v1_20_5.java
+index ef1ee9f..ed4dc71 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_5/StyleCodecs_v1_20_5.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_5/StyleCodecs_v1_20_5.java
+@@ -171,19 +171,7 @@ public class StyleCodecs_v1_20_5 {
+                     EntityHoverEvent.ModernHolder::new
+             ).mapCodec("contents").required().map(EntityHoverEvent::asModern, EntityHoverEvent::new);
+             public static final MapCodec<EntityHoverEvent> LEGACY_MAP_CODEC = createLegacy((converter, component) -> {
+-                try {
+-                    CompoundTag tag = SNbt.V1_14.deserialize(component.asUnformattedString());
+-                    JsonElement rawName = JsonParser.parseString((tag.get("name") instanceof StringTag ? ((StringTag) tag.get("name")).getValue() : ""));
+-                    TextComponent name = rawName == null ? null : TextCodecs_v1_20_5.TEXT.deserialize(converter.fork(JsonConverter_v1_20_5.INSTANCE), rawName).getOrThrow(JsonParseException::new);
+-                    Identifier type = Identifier.of((tag.get("type") instanceof StringTag ? ((StringTag) tag.get("type")).getValue() : ""));
+-                    if (!isValid(converter, type, TextVerifier_v1_20_5.class, TextVerifier_v1_20_5::verifyRegistryEntity)) {
+-                        return Result.error("Invalid entity: " + type);
+-                    }
+-                    UUID uuid = UUID.fromString((tag.get("id") instanceof StringTag ? ((StringTag) tag.get("id")).getValue() : ""));
+-                    return Result.success(new EntityHoverEvent(type, uuid, name));
+-                } catch (Throwable t) {
+-                    return Result.error(t);
+-                }
++                return com.viaversion.viaversion.libs.mcstructs.text.serializer.v1_20_3.StyleCodecs_v1_20_3.getEntityHoverEventResult(converter, component, TextCodecs_v1_20_5.TEXT, JsonConverter_v1_20_5.INSTANCE);
+             });
+         }
+     }
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_2/StyleCodecs_v1_21_2.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_2/StyleCodecs_v1_21_2.java
+index 424fef1..2fc6198 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_2/StyleCodecs_v1_21_2.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_2/StyleCodecs_v1_21_2.java
+@@ -171,19 +171,7 @@ public class StyleCodecs_v1_21_2 {
+                     EntityHoverEvent.ModernHolder::new
+             ).mapCodec("contents").required().map(EntityHoverEvent::asModern, EntityHoverEvent::new);
+             public static final MapCodec<EntityHoverEvent> LEGACY_MAP_CODEC = createLegacy((converter, component) -> {
+-                try {
+-                    CompoundTag tag = SNbt.V1_14.deserialize(component.asUnformattedString());
+-                    JsonElement rawName = JsonParser.parseString((tag.get("name") instanceof StringTag ? ((StringTag) tag.get("name")).getValue() : ""));
+-                    TextComponent name = rawName == null ? null : TextCodecs_v1_21_2.TEXT.deserialize(converter.fork(JsonConverter_v1_20_5.INSTANCE), rawName).getOrThrow(JsonParseException::new);
+-                    Identifier type = Identifier.of((tag.get("type") instanceof StringTag ? ((StringTag) tag.get("type")).getValue() : ""));
+-                    if (!isValid(converter, type, TextVerifier_v1_21_2.class, TextVerifier_v1_21_2::verifyRegistryEntity)) {
+-                        return Result.error("Invalid entity: " + type);
+-                    }
+-                    UUID uuid = UUID.fromString((tag.get("id") instanceof StringTag ? ((StringTag) tag.get("id")).getValue() : ""));
+-                    return Result.success(new EntityHoverEvent(type, uuid, name));
+-                } catch (Throwable t) {
+-                    return Result.error(t);
+-                }
++                return com.viaversion.viaversion.libs.mcstructs.text.serializer.v1_20_3.StyleCodecs_v1_20_3.getEntityHoverEventResult(converter, component, TextCodecs_v1_21_2.TEXT, JsonConverter_v1_20_5.INSTANCE);
+             });
+         }
+     }
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_4/StyleCodecs_v1_21_4.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_4/StyleCodecs_v1_21_4.java
+index 9141c5c..1b92a46 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_4/StyleCodecs_v1_21_4.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_4/StyleCodecs_v1_21_4.java
+@@ -172,19 +172,7 @@ public class StyleCodecs_v1_21_4 {
+                     EntityHoverEvent.ModernHolder::new
+             ).mapCodec("contents").required().map(EntityHoverEvent::asModern, EntityHoverEvent::new);
+             public static final MapCodec<EntityHoverEvent> LEGACY_MAP_CODEC = createLegacy((converter, component) -> {
+-                try {
+-                    CompoundTag tag = SNbt.V1_14.deserialize(component.asUnformattedString());
+-                    JsonElement rawName = JsonParser.parseString((tag.get("name") instanceof StringTag ? ((StringTag) tag.get("name")).getValue() : ""));
+-                    TextComponent name = rawName == null ? null : TextCodecs_v1_21_4.TEXT.deserialize(converter.fork(JsonConverter_v1_20_5.INSTANCE), rawName).getOrThrow(JsonParseException::new);
+-                    Identifier type = Identifier.of((tag.get("type") instanceof StringTag ? ((StringTag) tag.get("type")).getValue() : ""));
+-                    if (!isValid(converter, type, TextVerifier_v1_21_4.class, TextVerifier_v1_21_4::verifyRegistryEntity)) {
+-                        return Result.error("Invalid entity: " + type);
+-                    }
+-                    UUID uuid = UUID.fromString((tag.get("id") instanceof StringTag ? ((StringTag) tag.get("id")).getValue() : ""));
+-                    return Result.success(new EntityHoverEvent(type, uuid, name));
+-                } catch (Throwable t) {
+-                    return Result.error(t);
+-                }
++                return com.viaversion.viaversion.libs.mcstructs.text.serializer.v1_20_3.StyleCodecs_v1_20_3.getEntityHoverEventResult(converter, component, TextCodecs_v1_21_4.TEXT, JsonConverter_v1_20_5.INSTANCE);
+             });
+         }
+     }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java
-index 1850ab1..10924f9 100644
+index 3daa58d..9e49a18 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java
-@@ -181,6 +181,7 @@ public abstract class StringFormat {
+@@ -197,6 +197,7 @@ public abstract class StringFormat {
          return TextComponent.of(components);
      }
  
@@ -690,7 +949,7 @@ index 1850ab1..10924f9 100644
      /**
       * Convert a {@link TextComponent} to a string.<br>
       * The unknown handling is used to determine what should happen if an unsupported formatting is encountered.<br>
-@@ -197,11 +198,17 @@ public abstract class StringFormat {
+@@ -230,11 +231,17 @@ public abstract class StringFormat {
          Style lastStyle = null;
          List<TextComponent> texts = new ArrayList<>();
          texts.add(component.copy().mergeSiblingParentStyle());
