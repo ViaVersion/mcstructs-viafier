@@ -665,7 +665,7 @@ index eb05c0e..a0fd06c 100644
  
  }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
-index eda8782..a4fccec 100644
+index eda8782..6d1fece 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 @@ -31,13 +31,20 @@ import java.util.function.Consumer;
@@ -734,7 +734,7 @@ index eda8782..a4fccec 100644
 +            }
 +            out.append(s);
 +        };
-+        if (converter.currentConsumer() != null) {
++        if (converter != null && converter.currentConsumer() != null) {
 +            consumer = ((ComponentConsumer) converter.currentConsumer()).withConsumer(consumer);
 +            converter.setCurrentConsumer(consumer);
          }
