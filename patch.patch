@@ -687,12 +687,12 @@ index eb05c0e..a0fd06c 100644
  
  }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
-index eda8782..9378f8a 100644
+index e6998d9..d0c8d6f 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
-@@ -31,13 +31,20 @@ import java.util.function.Consumer;
-  * - {@link EntityNbtSource}<br>
-  * - {@link StorageNbtSource}
+@@ -32,13 +32,20 @@ import java.util.function.Consumer;
+  * - {@link StorageNbtSource}<br>
+  * - {@link ObjectComponent}
   */
 -@EqualsAndHashCode
 +@EqualsAndHashCode(exclude = "level")
@@ -712,7 +712,7 @@ index eda8782..9378f8a 100644
  
      /**
       * Append multiple strings to this component.
-@@ -58,6 +65,7 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -59,6 +66,7 @@ public abstract class TextComponent implements Copyable<TextComponent> {
       */
      public TextComponent append(final TextComponent component) {
          this.getSiblings().add(component);
@@ -720,7 +720,7 @@ index eda8782..9378f8a 100644
          return this;
      }
  
-@@ -69,11 +77,13 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -70,11 +78,13 @@ public abstract class TextComponent implements Copyable<TextComponent> {
       */
      public TextComponent append(final TextComponent... components) {
          Collections.addAll(this.getSiblings(), components);
@@ -734,7 +734,7 @@ index eda8782..9378f8a 100644
          return this;
      }
  
-@@ -199,16 +209,34 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -202,16 +212,34 @@ public abstract class TextComponent implements Copyable<TextComponent> {
          return component;
      }
  
@@ -772,7 +772,7 @@ index eda8782..9378f8a 100644
  
      /**
       * @return A legacy formatted string representation of this component
-@@ -223,6 +251,15 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -226,6 +254,15 @@ public abstract class TextComponent implements Copyable<TextComponent> {
       * @return An unformatted string representation of this component
       */
      public abstract String asSingleString();
@@ -839,7 +839,7 @@ index 03f980a..1a95e28 100644
      @Override
      public TextComponent copy() {
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
-index 3f69ece..f393ddc 100644
+index da4005b..f649c83 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
 @@ -44,7 +44,29 @@ import java.util.function.Supplier;
@@ -911,10 +911,10 @@ index c52b96a..0d1533d 100644
                  Identifier entityType = Identifier.of((rawEntity.get("type") instanceof StringTag ? ((StringTag) rawEntity.get("type")).getValue() : ""));
                  UUID uuid = UUID.fromString((rawEntity.get("id") instanceof StringTag ? ((StringTag) rawEntity.get("id")).getValue() : ""));
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java
-index da8f78e..2cd95d8 100644
+index b9bcc5b..a248b77 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java
-@@ -171,21 +171,28 @@ public class StyleCodecs_v1_20_3 {
+@@ -178,21 +178,28 @@ public class StyleCodecs_v1_20_3 {
                      EntityHoverEvent.ModernHolder::new
              ).mapCodec("contents").required().map(EntityHoverEvent::asModern, EntityHoverEvent::new);
              public static final MapCodec<EntityHoverEvent> LEGACY_MAP_CODEC = createLegacy((converter, component) -> {
@@ -957,10 +957,10 @@ index da8f78e..2cd95d8 100644
 +
  }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_5/StyleCodecs_v1_20_5.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_5/StyleCodecs_v1_20_5.java
-index ef1ee9f..ed4dc71 100644
+index 3ffbd46..cf83b49 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_5/StyleCodecs_v1_20_5.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_5/StyleCodecs_v1_20_5.java
-@@ -171,19 +171,7 @@ public class StyleCodecs_v1_20_5 {
+@@ -178,19 +178,7 @@ public class StyleCodecs_v1_20_5 {
                      EntityHoverEvent.ModernHolder::new
              ).mapCodec("contents").required().map(EntityHoverEvent::asModern, EntityHoverEvent::new);
              public static final MapCodec<EntityHoverEvent> LEGACY_MAP_CODEC = createLegacy((converter, component) -> {
@@ -982,10 +982,10 @@ index ef1ee9f..ed4dc71 100644
          }
      }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_2/StyleCodecs_v1_21_2.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_2/StyleCodecs_v1_21_2.java
-index 424fef1..2fc6198 100644
+index 9995ef8..d8b9df4 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_2/StyleCodecs_v1_21_2.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_2/StyleCodecs_v1_21_2.java
-@@ -171,19 +171,7 @@ public class StyleCodecs_v1_21_2 {
+@@ -178,19 +178,7 @@ public class StyleCodecs_v1_21_2 {
                      EntityHoverEvent.ModernHolder::new
              ).mapCodec("contents").required().map(EntityHoverEvent::asModern, EntityHoverEvent::new);
              public static final MapCodec<EntityHoverEvent> LEGACY_MAP_CODEC = createLegacy((converter, component) -> {
@@ -1007,10 +1007,10 @@ index 424fef1..2fc6198 100644
          }
      }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_4/StyleCodecs_v1_21_4.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_4/StyleCodecs_v1_21_4.java
-index 9141c5c..1b92a46 100644
+index b2df27d..2705ede 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_4/StyleCodecs_v1_21_4.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_21_4/StyleCodecs_v1_21_4.java
-@@ -172,19 +172,7 @@ public class StyleCodecs_v1_21_4 {
+@@ -179,19 +179,7 @@ public class StyleCodecs_v1_21_4 {
                      EntityHoverEvent.ModernHolder::new
              ).mapCodec("contents").required().map(EntityHoverEvent::asModern, EntityHoverEvent::new);
              public static final MapCodec<EntityHoverEvent> LEGACY_MAP_CODEC = createLegacy((converter, component) -> {
