@@ -8,28 +8,50 @@ index 3ef6bf6..7365fbb 100644
      api project(":MCStructs-snbt")
 +    api project(":MCStructs-core")
  }
-diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java
-index 48d63be..6b37a2c 100644
---- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java
-+++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java
-@@ -8,6 +8,16 @@ import java.util.*;
- 
- public interface DataConverter<T> {
- 
+diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/ConsumerTracking.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/ConsumerTracking.java
+new file mode 100644
+index 0000000..3074e75
+--- /dev/null
++++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/ConsumerTracking.java
+@@ -0,0 +1,19 @@
++package com.viaversion.viaversion.libs.mcstructs.converter;
++
++import java.util.function.Consumer;
++import javax.annotation.Nullable;
++
++public interface ConsumerTracking {
++
 +    @Nullable
-+    default java.util.function.Consumer<String> currentConsumer() {
++    default Consumer<String> currentConsumer() {
 +        return null;
 +    }
-+    default void setCurrentConsumer(java.util.function.Consumer<String> consumer) {
++
++    default void setCurrentConsumer(Consumer<String> consumer) {
 +    }
++
++    default ConsumerTracking forkIfDefault() {
++        return this;
++    }
++}
+diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java
+index 48d63be..5220daf 100644
+--- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java
++++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/DataConverter.java
+@@ -6,7 +6,12 @@ import com.viaversion.viaversion.libs.mcstructs.converter.model.Result;
+ import javax.annotation.Nullable;
+ import java.util.*;
+ 
+-public interface DataConverter<T> {
++public interface DataConverter<T> extends ConsumerTracking {
++
++    @Override
 +    default DataConverter<T> forkIfDefault() {
 +        return this;
 +    }
-+
+ 
      <N> N convertTo(final DataConverter<N> converter, @Nullable final T element);
  
-     default <N> T convertFrom(final DataConverter<N> converter, @Nullable final N element) {
-@@ -152,6 +162,11 @@ public interface DataConverter<T> {
+@@ -152,6 +157,11 @@ public interface DataConverter<T> {
      }
  
      default <O> DataConverter<O> fork(final DataConverter<O> other) {
@@ -665,7 +687,7 @@ index eb05c0e..a0fd06c 100644
  
  }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
-index eda8782..6d1fece 100644
+index eda8782..9378f8a 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 @@ -31,13 +31,20 @@ import java.util.function.Consumer;
@@ -726,7 +748,7 @@ index eda8782..6d1fece 100644
 -            for (TextComponent sibling : this.siblings) out.append(sibling.asUnformattedString());
 +        return asUnformattedString(null);
 +    }
-+    public String asUnformattedString(final com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<?> converter) {
++    public String asUnformattedString(final com.viaversion.viaversion.libs.mcstructs.converter.ConsumerTracking converter) {
 +        StringBuilder out = new StringBuilder();
 +        ComponentConsumer consumer = s -> {
 +            if (s.length() + out.length() > MAX_LEN) {
@@ -741,7 +763,7 @@ index eda8782..6d1fece 100644
 +        visit(converter, consumer);
          return out.toString();
      }
-+    public void visit(final com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<?> converter, final ComponentConsumer consumer) {
++    public void visit(final com.viaversion.viaversion.libs.mcstructs.converter.ConsumerTracking converter, final ComponentConsumer consumer) {
 +        this.asSingleString(converter, consumer);
 +        if (this.siblings != null) {
 +            for (TextComponent sibling : this.siblings) sibling.visit(converter, consumer);
@@ -754,7 +776,7 @@ index eda8782..6d1fece 100644
       * @return An unformatted string representation of this component
       */
      public abstract String asSingleString();
-+    public void asSingleString(final com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<?> converter, final ComponentConsumer consumer) {
++    public void asSingleString(final com.viaversion.viaversion.libs.mcstructs.converter.ConsumerTracking converter, final ComponentConsumer consumer) {
 +        consumer.accept(this.asSingleString());
 +    }
 +    @FunctionalInterface
@@ -767,7 +789,7 @@ index eda8782..6d1fece 100644
      @Override
      public abstract TextComponent copy();
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
-index 03f980a..b54a5c3 100644
+index 03f980a..1a95e28 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
 @@ -150,6 +150,45 @@ public class TranslationComponent extends TextComponent {
@@ -799,7 +821,7 @@ index 03f980a..b54a5c3 100644
 +        }
 +    }
 +    @Override
-+    public void asSingleString(final com.viaversion.viaversion.libs.mcstructs.converter.DataConverter<?> converter, final ComponentConsumer consumer) {
++    public void asSingleString(final com.viaversion.viaversion.libs.mcstructs.converter.ConsumerTracking converter, final ComponentConsumer consumer) {
 +        if (consumer instanceof TranslatableContentConsumer) {
 +            if (converter != null) {
 +                converter.setCurrentConsumer(consumer);
@@ -816,6 +838,78 @@ index 03f980a..b54a5c3 100644
  
      @Override
      public TextComponent copy() {
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
+index 3f69ece..f393ddc 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
+@@ -44,7 +44,29 @@ import java.util.function.Supplier;
+  * The text component serializer and deserializer wrapper class.<br>
+  * Use the static default fields for a specific minecraft version or create your own serializer/deserializer.
+  */
+-public class TextComponentSerializer {
++public class TextComponentSerializer implements com.viaversion.viaversion.libs.mcstructs.converter.ConsumerTracking {
++
++    private java.util.function.Consumer<String> stringConsumer;
++    private boolean isDefault = true;
++    @Override
++    @Nullable
++    public java.util.function.Consumer<String> currentConsumer() {
++        return this.stringConsumer;
++    }
++    @Override
++    public void setCurrentConsumer(java.util.function.Consumer<String> consumer) {
++        this.stringConsumer = consumer;
++    }
++    @Override
++    public TextComponentSerializer forkIfDefault() {
++        return isDefault ? new TextComponentSerializer(this.parentCodec, this.gsonSupplier, this.legacyGson) : this;
++    }
++    private TextComponentSerializer(final TextComponentCodec parentCodec, final Supplier<Gson> gsonSupplier, final boolean legacyGson) {
++        this.parentCodec = parentCodec;
++        this.gsonSupplier = gsonSupplier;
++        this.legacyGson = legacyGson;
++        this.isDefault = false;
++    }
+ 
+     /**
+      * The text component serializer for 1.6.<br>
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_16/HoverEventDeserializer_v1_16.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_16/HoverEventDeserializer_v1_16.java
+index 02a81fa..95819fc 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_16/HoverEventDeserializer_v1_16.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_16/HoverEventDeserializer_v1_16.java
+@@ -22,7 +22,7 @@ import static com.viaversion.viaversion.libs.mcstructs.text.utils.JsonUtils.getS
+ 
+ public class HoverEventDeserializer_v1_16 implements JsonDeserializer<HoverEvent> {
+ 
+-    protected final TextComponentSerializer textComponentSerializer;
++    protected TextComponentSerializer textComponentSerializer;
+     protected final SNbt<?> sNbt;
+ 
+     public HoverEventDeserializer_v1_16(final TextComponentSerializer textComponentSerializer, final SNbt<?> sNbt) {
+@@ -87,7 +87,8 @@ public class HoverEventDeserializer_v1_16 implements JsonDeserializer<HoverEvent
+                 return new ItemHoverEvent(id, count, tag);
+             case SHOW_ENTITY:
+                 try {
+-                    CompoundTag rawEntity = (CompoundTag) this.sNbt.deserialize(text.asUnformattedString());
++                    this.textComponentSerializer = this.textComponentSerializer.forkIfDefault();
++                    CompoundTag rawEntity = (CompoundTag) this.sNbt.deserialize(text.asUnformattedString(this.textComponentSerializer));
+                     TextComponent name = this.textComponentSerializer.deserialize((rawEntity.get("name") instanceof StringTag ? ((StringTag) rawEntity.get("name")).getValue() : ""));
+                     Identifier entityType = Identifier.of((rawEntity.get("type") instanceof StringTag ? ((StringTag) rawEntity.get("type")).getValue() : ""));
+                     UUID uuid = UUID.fromString((rawEntity.get("id") instanceof StringTag ? ((StringTag) rawEntity.get("id")).getValue() : ""));
+diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_18/HoverEventDeserializer_v1_18.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_18/HoverEventDeserializer_v1_18.java
+index c52b96a..0d1533d 100644
+--- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_18/HoverEventDeserializer_v1_18.java
++++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_18/HoverEventDeserializer_v1_18.java
+@@ -21,7 +21,8 @@ public class HoverEventDeserializer_v1_18 extends HoverEventDeserializer_v1_16 {
+     protected HoverEvent deserializeLegacy(final HoverEventAction action, final TextComponent text) {
+         if (action == HoverEventAction.SHOW_ENTITY) {
+             try {
+-                CompoundTag rawEntity = (CompoundTag) this.sNbt.deserialize(text.asUnformattedString());
++                this.textComponentSerializer = this.textComponentSerializer.forkIfDefault();
++                CompoundTag rawEntity = (CompoundTag) this.sNbt.deserialize(text.asUnformattedString(this.textComponentSerializer));
+                 TextComponent name = this.textComponentSerializer.deserialize((rawEntity.get("name") instanceof StringTag ? ((StringTag) rawEntity.get("name")).getValue() : ""));
+                 Identifier entityType = Identifier.of((rawEntity.get("type") instanceof StringTag ? ((StringTag) rawEntity.get("type")).getValue() : ""));
+                 UUID uuid = UUID.fromString((rawEntity.get("id") instanceof StringTag ? ((StringTag) rawEntity.get("id")).getValue() : ""));
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java
 index da8f78e..2cd95d8 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/v1_20_3/StyleCodecs_v1_20_3.java
