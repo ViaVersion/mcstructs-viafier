@@ -545,7 +545,7 @@ index 3ffed7c..351b275 100644
          return ClickEvent.custom(this.id, tag);
      }
 diff --git a/MCStructs-itemcomponents/src/main/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java b/MCStructs-itemcomponents/src/main/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
-index 1aa4df1..8d19ca8 100644
+index fa7c548..e6d4be0 100644
 --- a/MCStructs-itemcomponents/src/main/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
 +++ b/MCStructs-itemcomponents/src/main/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/impl/v1_20_5/ItemComponents_v1_20_5.java
 @@ -229,7 +229,7 @@ public class ItemComponents_v1_20_5 extends ItemComponentRegistry {
@@ -558,7 +558,7 @@ index 1aa4df1..8d19ca8 100644
                              }, list -> {
                                  Map<String, List<GameProfile.Property>> properties = new HashMap<>();
 diff --git a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
-index 56b5b58..4fda66f 100644
+index 3bea957..3065198 100644
 --- a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
 +++ b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
 @@ -35,7 +35,7 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
@@ -589,7 +589,7 @@ index 56b5b58..4fda66f 100644
 +        register(registry.ENTITY_DATA, compoundTagWithId());
 +        register(registry.BUCKET_ENTITY_DATA, new CompoundTag());
 +        register(registry.BLOCK_ENTITY_DATA, compoundTagWithId());
-         register(registry.INSTRUMENT, new EitherEntry<>(new Instrument(new EitherEntry<>(new SoundEvent(Identifier.of("test"), 0.5F)), 12, 13)));
+         register(registry.INSTRUMENT, new Holder<>(new Instrument(new Holder<>(new SoundEvent(Identifier.of("test"), 0.5F)), 12, 13)));
          register(registry.OMINOUS_BOTTLE_AMPLIFIER, 2);
          register(registry.RECIPES, Arrays.asList(Identifier.of("test"), Identifier.of("test2")));
 @@ -116,9 +116,14 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
@@ -609,10 +609,10 @@ index 56b5b58..4fda66f 100644
 +    }
  }
 diff --git a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java
-index baa49ab..66bcf5a 100644
+index 94a0850..7f67950 100644
 --- a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java
 +++ b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java
-@@ -77,7 +77,7 @@ public class Test_v1_21_5 extends ItemComponentTest<ItemComponents_v1_21_5> {
+@@ -78,7 +78,7 @@ public class Test_v1_21_5 extends ItemComponentTest<ItemComponents_v1_21_5> {
              valueMatchers.put("test", new Types_v1_20_5.BlockPredicate.ValueMatcher("val"));
              valueMatchers.put("test2", new Types_v1_20_5.BlockPredicate.ValueMatcher("min val", null));
              return valueMatchers;
