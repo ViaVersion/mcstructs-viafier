@@ -90,7 +90,7 @@ index 9d71b33..508b3db 100644
      public <N> N convertTo(DataConverter<N> to, @Nullable JsonElement element) {
          if (to == this) return (N) element;
 diff --git a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
-index 81535c3..b0cb29a 100644
+index 0ee999a..cbb0279 100644
 --- a/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
 +++ b/MCStructs-converter/src/main/java/com/viaversion/viaversion/libs/mcstructs/converter/impl/v1_20_3/NbtConverter_v1_20_3.java
 @@ -18,6 +18,21 @@ public class NbtConverter_v1_20_3 implements DataConverter<Tag> {
@@ -558,7 +558,7 @@ index fa7c548..e6d4be0 100644
                              }, list -> {
                                  Map<String, List<GameProfile.Property>> properties = new HashMap<>();
 diff --git a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
-index 3bea957..3065198 100644
+index 3bea957..d77c383 100644
 --- a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
 +++ b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
 @@ -35,7 +35,7 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
@@ -687,7 +687,7 @@ index eb05c0e..a0fd06c 100644
  
  }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
-index e6998d9..d0c8d6f 100644
+index 2f291dd..a2f92c9 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/TextComponent.java
 @@ -32,13 +32,20 @@ import java.util.function.Consumer;
@@ -734,7 +734,7 @@ index e6998d9..d0c8d6f 100644
          return this;
      }
  
-@@ -202,16 +212,34 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -204,16 +214,34 @@ public abstract class TextComponent implements Copyable<TextComponent> {
          return component;
      }
  
@@ -772,7 +772,7 @@ index e6998d9..d0c8d6f 100644
  
      /**
       * @return A legacy formatted string representation of this component
-@@ -226,6 +254,15 @@ public abstract class TextComponent implements Copyable<TextComponent> {
+@@ -228,6 +256,15 @@ public abstract class TextComponent implements Copyable<TextComponent> {
       * @return An unformatted string representation of this component
       */
      public abstract String asSingleString();
@@ -787,9 +787,9 @@ index e6998d9..d0c8d6f 100644
 +    }
  
      @Override
-     public abstract TextComponent copy();
+     public TextComponent copy() {
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
-index 03f980a..1a95e28 100644
+index 67df226..cf03f09 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/components/TranslationComponent.java
 @@ -150,6 +150,45 @@ public class TranslationComponent extends TextComponent {
@@ -837,9 +837,9 @@ index 03f980a..1a95e28 100644
 +    }
  
      @Override
-     public TextComponent copy() {
+     public TextComponent shallowCopy() {
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
-index da4005b..f649c83 100644
+index 55851ac..141f640 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
 @@ -44,7 +44,29 @@ import java.util.function.Supplier;
@@ -1166,17 +1166,17 @@ index 121af7f..db5db2c 100644
      }
  
 diff --git a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
-index fd5b024..d1ae744 100644
+index b127da9..975aeb6 100644
 --- a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
 +++ b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
-@@ -52,10 +52,18 @@ class TextComponentCodecTest {
+@@ -51,10 +51,18 @@ class TextComponentCodecTest {
              .append(new NbtComponent("raw", true, new StringComponent("separator"), new EntityNbtSource("selector")))
              .append(new NbtComponent("raw", true, new StringComponent("separator"), new StorageNbtSource(Identifier.of("namespace", "id"))))
              .append(new StringComponent("hover text").setStyle(new Style().setHoverEvent(new TextHoverEvent(new StringComponent("text")))))
 -            .append(new StringComponent("hover item").setStyle(new Style().setHoverEvent(new ItemHoverEvent(Identifier.of("stone"), 64, new CompoundTag().put("display", new CompoundTag().putString("Name", "name"))))))
 +            .append(new StringComponent("hover item").setStyle(new Style().setHoverEvent(new ItemHoverEvent(Identifier.of("stone"), 64, buildDisplayName()))))
              .append(new StringComponent("hover entity").setStyle(new Style().setHoverEvent(new EntityHoverEvent(Identifier.of("player"), UUID.randomUUID(), new StringComponent("name")))))
-             .append(new StringComponent("style").setStyle(new Style().setFormatting(TextFormatting.ALL.values().toArray(new TextFormatting[0])).setClickEvent(ClickEvent.openUrl(URI.create("https://example.com"))).setFont(Identifier.of("font")).setInsertion("insertion")));
+             .append(new StringComponent("style").setStyle(new Style().setFormatting(TextFormatting.ALL.values().toArray(new TextFormatting[0])).setClickEvent(ClickEvent.openUrl("https://example.com")).setFont(Identifier.of("font")).setInsertion("insertion")));
  
 +    private CompoundTag buildDisplayName() {
 +        CompoundTag tag = new CompoundTag();
@@ -1189,7 +1189,7 @@ index fd5b024..d1ae744 100644
      @ParameterizedTest
      @FieldSource("codecs")
      void serializeDeserializeJson(final TextComponentCodec codec) {
-@@ -75,9 +83,9 @@ class TextComponentCodecTest {
+@@ -74,9 +82,9 @@ class TextComponentCodecTest {
      @ParameterizedTest
      @FieldSource("legacyCodecs")
      void legacyItemDeserialization(final TextComponentCodec codec) throws SNbtSerializeException {
@@ -1202,7 +1202,7 @@ index fd5b024..d1ae744 100644
          TextComponent legacyComponent = new StringComponent("test")
                  .setStyle(new Style()
                          .setHoverEvent(new ItemHoverEvent(SNbt.LATEST.serialize(legacyNbt)))
-@@ -95,10 +103,10 @@ class TextComponentCodecTest {
+@@ -94,10 +102,10 @@ class TextComponentCodecTest {
      @FieldSource("legacyCodecs")
      void legacyEntityDeserialization(final TextComponentCodec codec) throws SNbtSerializeException {
          UUID randomUUID = UUID.randomUUID();
@@ -1217,7 +1217,7 @@ index fd5b024..d1ae744 100644
          TextComponent legacyComponent = new StringComponent("test")
                  .setStyle(new Style()
                          .setHoverEvent(new EntityHoverEvent(new StringComponent(SNbt.LATEST.serialize(legacyNbt))))
-@@ -116,19 +124,31 @@ class TextComponentCodecTest {
+@@ -115,19 +123,31 @@ class TextComponentCodecTest {
      @ParameterizedTest
      @FieldSource("codecs")
      void arrayWithTag(final TextComponentCodec codec) {

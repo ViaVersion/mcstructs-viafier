@@ -104,6 +104,7 @@ def main():
 
     os.chdir('MCStructs')
     subprocess.run(['git', 'add', '.'], check=True)
+    subprocess.run(['git', 'clean', '-fd'], check=True)
     subprocess.run(['git', 'reset', '--hard', 'origin/main'], check=True)
 
     handle_file('build.gradle')
@@ -144,8 +145,14 @@ def relocate_package_dirs(src_root):
     if not os.path.isdir(old_path):
         return
 
-    os.makedirs(os.path.dirname(new_path), exist_ok=True)
-    shutil.move(old_path, new_path)
+    if os.path.isdir(new_path):
+        # Merge contents instead of nesting
+        for item in os.listdir(old_path):
+            shutil.move(os.path.join(old_path, item), os.path.join(new_path, item))
+        os.rmdir(old_path)
+    else:
+        os.makedirs(os.path.dirname(new_path), exist_ok=True)
+        shutil.move(old_path, new_path)
 
 
 def handle_dir(path):
