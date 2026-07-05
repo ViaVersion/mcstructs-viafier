@@ -839,7 +839,7 @@ index 67df226..cf03f09 100644
      @Override
      public TextComponent shallowCopy() {
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
-index 55851ac..141f640 100644
+index 138561f..1ef7220 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
 @@ -44,7 +44,29 @@ import java.util.function.Supplier;
@@ -1166,10 +1166,10 @@ index 121af7f..db5db2c 100644
      }
  
 diff --git a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
-index b127da9..975aeb6 100644
+index 01b5647..5042b3c 100644
 --- a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
 +++ b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
-@@ -51,10 +51,18 @@ class TextComponentCodecTest {
+@@ -53,10 +53,18 @@ class TextComponentCodecTest {
              .append(new NbtComponent("raw", true, new StringComponent("separator"), new EntityNbtSource("selector")))
              .append(new NbtComponent("raw", true, new StringComponent("separator"), new StorageNbtSource(Identifier.of("namespace", "id"))))
              .append(new StringComponent("hover text").setStyle(new Style().setHoverEvent(new TextHoverEvent(new StringComponent("text")))))
@@ -1189,7 +1189,7 @@ index b127da9..975aeb6 100644
      @ParameterizedTest
      @FieldSource("codecs")
      void serializeDeserializeJson(final TextComponentCodec codec) {
-@@ -74,9 +82,9 @@ class TextComponentCodecTest {
+@@ -76,9 +84,9 @@ class TextComponentCodecTest {
      @ParameterizedTest
      @FieldSource("legacyCodecs")
      void legacyItemDeserialization(final TextComponentCodec codec) throws SNbtSerializeException {
@@ -1202,7 +1202,7 @@ index b127da9..975aeb6 100644
          TextComponent legacyComponent = new StringComponent("test")
                  .setStyle(new Style()
                          .setHoverEvent(new ItemHoverEvent(SNbt.LATEST.serialize(legacyNbt)))
-@@ -94,10 +102,10 @@ class TextComponentCodecTest {
+@@ -96,10 +104,10 @@ class TextComponentCodecTest {
      @FieldSource("legacyCodecs")
      void legacyEntityDeserialization(final TextComponentCodec codec) throws SNbtSerializeException {
          UUID randomUUID = UUID.randomUUID();
@@ -1217,7 +1217,7 @@ index b127da9..975aeb6 100644
          TextComponent legacyComponent = new StringComponent("test")
                  .setStyle(new Style()
                          .setHoverEvent(new EntityHoverEvent(new StringComponent(SNbt.LATEST.serialize(legacyNbt))))
-@@ -115,19 +123,31 @@ class TextComponentCodecTest {
+@@ -117,19 +125,31 @@ class TextComponentCodecTest {
      @ParameterizedTest
      @FieldSource("codecs")
      void arrayWithTag(final TextComponentCodec codec) {
