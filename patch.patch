@@ -1032,18 +1032,19 @@ index b2df27d..2705ede 100644
          }
      }
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java
-index 3daa58d..9e49a18 100644
+index 3daa58d..c174d3d 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/stringformat/StringFormat.java
-@@ -197,6 +197,7 @@ public abstract class StringFormat {
+@@ -197,6 +197,8 @@ public abstract class StringFormat {
          return TextComponent.of(components);
      }
  
++    private static final int MAX_LEN = Short.MAX_VALUE * 2 + 1;
 +    private static final IllegalArgumentException EX = new IllegalArgumentException("Too long");
      /**
       * Convert a {@link TextComponent} to a string.<br>
       * The unknown handling is used to determine what should happen if an unsupported formatting is encountered.<br>
-@@ -230,11 +231,17 @@ public abstract class StringFormat {
+@@ -230,11 +232,17 @@ public abstract class StringFormat {
          Style lastStyle = null;
          List<TextComponent> texts = new ArrayList<>();
          texts.add(component.copy().mergeSiblingParentStyle());
@@ -1062,6 +1063,32 @@ index 3daa58d..9e49a18 100644
                  for (int i = 0; i < translation.getSiblings().size(); i++) {
                      texts.add(i + 1, translation.getSiblings().get(i));
                  }
+@@ -260,8 +268,14 @@ public abstract class StringFormat {
+                             }
+                         }
+                         lastStyle = currentStyle;
++                        if (output.length() > MAX_LEN) {
++                            throw EX;
++                        }
+                     }
+-                    output.append(current.asSingleString());
++                    if (output.length() + text.length() > MAX_LEN) {
++                        throw EX;
++                    }
++                    output.append(text);
+                 }
+ 
+                 for (int i = 0; i < current.getSiblings().size(); i++) {
+@@ -270,6 +284,9 @@ public abstract class StringFormat {
+             }
+         }
+         if (lastStyle != null && !lastStyle.isEmpty() && this.shouldResetAtEnd()) this.write(output, TextFormatting.RESET);
++        if (output.length() > MAX_LEN) {
++            throw EX;
++        }
+         return output.toString();
+     }
+ 
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/utils/JsonNbtConverter.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/utils/JsonNbtConverter.java
 index 121af7f..db5db2c 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/utils/JsonNbtConverter.java
