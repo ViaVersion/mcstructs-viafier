@@ -460,7 +460,7 @@ index f1cadf5..bb94740 100644
          return out;
      }
 diff --git a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/InlinedMapCodecTest.java b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/InlinedMapCodecTest.java
-index 6e27c62..fe31d47 100644
+index 957311a..ae8d101 100644
 --- a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/InlinedMapCodecTest.java
 +++ b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/InlinedMapCodecTest.java
 @@ -29,21 +29,23 @@ public class InlinedMapCodecTest {
@@ -484,7 +484,7 @@ index 6e27c62..fe31d47 100644
 +        extra.put("extra", extra2);
 +        tag.put("extra", extra);
  
-         assertEquals(new C1("Test1", new C2("Test2", new C2("Test3", new C2("Test4", null)))), codec.deserialize(NbtConverter_v1_20_3.INSTANCE, tag).get());
+         assertEquals(new C1("Test1", new C2("Test2", new C2("Test3", new C2("Test4", null)))), CODEC.deserialize(NbtConverter_v1_20_3.INSTANCE, tag).get());
      }
  
      @Test
@@ -494,7 +494,7 @@ index 6e27c62..fe31d47 100644
 +        CompoundTag tag = new CompoundTag();
 +        tag.putString("s1", "Test1");
  
-         assertThrows(Throwable.class, () -> codec.deserialize(NbtConverter_v1_20_3.INSTANCE, tag).get());
+         assertThrows(Throwable.class, () -> CODEC.deserialize(NbtConverter_v1_20_3.INSTANCE, tag).get());
      }
 diff --git a/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/RecursiveCodecTest.java b/MCStructs-converter/src/test/java/com/viaversion/viaversion/libs/mcstructs/converter/codec/RecursiveCodecTest.java
 index 038ca48..49dfc04 100644
@@ -558,7 +558,7 @@ index fa7c548..e6d4be0 100644
                              }, list -> {
                                  Map<String, List<GameProfile.Property>> properties = new HashMap<>();
 diff --git a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
-index 3bea957..d77c383 100644
+index f291d2b..f746834 100644
 --- a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
 +++ b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_20_5.java
 @@ -35,7 +35,7 @@ public class Test_v1_20_5 extends ItemComponentTest<ItemComponents_v1_20_5> {
@@ -659,11 +659,11 @@ index 4ebec9e..5aa146d 100644
  
      protected Tag readValue(final StringReader_v1_12 reader) throws SNbtDeserializeException {
 diff --git a/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java b/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
-index eb05c0e..a0fd06c 100644
+index d6aa305..1bb83a9 100644
 --- a/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
 +++ b/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
 @@ -46,14 +46,14 @@ class SNbtDeserializer_v1_21_5Test extends SNbtDeserializerTest {
-         executeTests(SNbt.V1_21_5, expectedResults);
+         executeTests(SNbt.V1_21_5, EXPECTED_RESULTS);
      }
  
 -    @Test
@@ -1193,7 +1193,7 @@ index 121af7f..db5db2c 100644
      }
  
 diff --git a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
-index 01b5647..5042b3c 100644
+index a1a0a07..58b0606 100644
 --- a/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
 +++ b/MCStructs-text/src/test/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentCodecTest.java
 @@ -53,10 +53,18 @@ class TextComponentCodecTest {
@@ -1214,23 +1214,23 @@ index 01b5647..5042b3c 100644
 +    }
 +
      @ParameterizedTest
-     @FieldSource("codecs")
+     @FieldSource("CODECS")
      void serializeDeserializeJson(final TextComponentCodec codec) {
 @@ -76,9 +84,9 @@ class TextComponentCodecTest {
      @ParameterizedTest
-     @FieldSource("legacyCodecs")
+     @FieldSource("LEGACY_CODECS")
      void legacyItemDeserialization(final TextComponentCodec codec) throws SNbtSerializeException {
 -        CompoundTag legacyNbt = new CompoundTag()
 -                .put("id", "stone")
 -                .putByte("Count", (byte) 5);
-+    CompoundTag legacyNbt = new CompoundTag();
-+    legacyNbt.put("id", new StringTag("stone"));
-+    legacyNbt.putByte("Count", (byte) 5);
++        CompoundTag legacyNbt = new CompoundTag();
++        legacyNbt.put("id", new StringTag("stone"));
++        legacyNbt.putByte("Count", (byte) 5);
          TextComponent legacyComponent = new StringComponent("test")
                  .setStyle(new Style()
                          .setHoverEvent(new ItemHoverEvent(SNbt.LATEST.serialize(legacyNbt)))
 @@ -96,10 +104,10 @@ class TextComponentCodecTest {
-     @FieldSource("legacyCodecs")
+     @FieldSource("LEGACY_CODECS")
      void legacyEntityDeserialization(final TextComponentCodec codec) throws SNbtSerializeException {
          UUID randomUUID = UUID.randomUUID();
 -        CompoundTag legacyNbt = new CompoundTag()
@@ -1246,7 +1246,7 @@ index 01b5647..5042b3c 100644
                          .setHoverEvent(new EntityHoverEvent(new StringComponent(SNbt.LATEST.serialize(legacyNbt))))
 @@ -117,19 +125,31 @@ class TextComponentCodecTest {
      @ParameterizedTest
-     @FieldSource("codecs")
+     @FieldSource("CODECS")
      void arrayWithTag(final TextComponentCodec codec) {
 -        ListTag<Tag> tags = new ListTag<>()
 -                .add(new CompoundTag()
