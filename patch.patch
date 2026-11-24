@@ -609,10 +609,10 @@ index f291d2b..f746834 100644
 +    }
  }
 diff --git a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java
-index 94a0850..7f67950 100644
+index 3416c0d..3c5635e 100644
 --- a/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java
 +++ b/MCStructs-itemcomponents/src/test/java/com/viaversion/viaversion/libs/mcstructs/itemcomponents/versions/Test_v1_21_5.java
-@@ -78,7 +78,7 @@ public class Test_v1_21_5 extends ItemComponentTest<ItemComponents_v1_21_5> {
+@@ -80,7 +80,7 @@ public class Test_v1_21_5 extends ItemComponentTest<ItemComponents_v1_21_5> {
              valueMatchers.put("test", new Types_v1_20_5.BlockPredicate.ValueMatcher("val"));
              valueMatchers.put("test2", new Types_v1_20_5.BlockPredicate.ValueMatcher("min val", null));
              return valueMatchers;
@@ -622,10 +622,10 @@ index 94a0850..7f67950 100644
          register(registry.ENCHANTMENTS, init(() -> {
              Map<RegistryEntry, Integer> enchantments = new HashMap<>();
 diff --git a/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java b/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-index 4ebec9e..5aa146d 100644
+index 4ebec9e..aff0479 100644
 --- a/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
 +++ b/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/SNbtDeserializer_v1_12.java
-@@ -95,10 +95,28 @@ public class SNbtDeserializer_v1_12 implements SNbtDeserializer<CompoundTag> {
+@@ -95,19 +95,43 @@ public class SNbtDeserializer_v1_12 implements SNbtDeserializer<CompoundTag> {
          reader.read();
          reader.skipWhitespaces();
          if (!reader.canRead()) throw this.makeException(reader, "Expected value");
@@ -658,6 +658,36 @@ index 4ebec9e..5aa146d 100644
      }
  
      protected Tag readValue(final StringReader_v1_12 reader) throws SNbtDeserializeException {
+         reader.skipWhitespaces();
+         if (!reader.canRead()) throw this.makeException(reader, "Expected value");
+         char c = reader.peek();
+-        if (c == '{') return this.readCompound(reader);
+-        else if (c == '[') return this.readListOrArray(reader);
+-        else return this.readPrimitive(reader);
++        if (c != '{' && c != '[') return this.readPrimitive(reader);
++        if (reader.depth >= 512) throw this.makeException(reader, "Data is nested too deeply");
++
++        reader.depth++;
++        try {
++            return c == '{' ? this.readCompound(reader) : this.readListOrArray(reader);
++        } finally {
++            reader.depth--;
++        }
+     }
+ 
+     protected Tag readPrimitive(final StringReader_v1_12 reader) throws SNbtDeserializeException {
+diff --git a/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/StringReader_v1_12.java b/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/StringReader_v1_12.java
+index 9de1a23..d7216c6 100644
+--- a/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/StringReader_v1_12.java
++++ b/MCStructs-snbt/src/main/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_12/StringReader_v1_12.java
+@@ -6,6 +6,7 @@ public class StringReader_v1_12 {
+ 
+     private final String s;
+     private int index;
++    int depth;
+ 
+     public StringReader_v1_12(final String s) {
+         this.s = s;
 diff --git a/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java b/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
 index d6aa305..1bb83a9 100644
 --- a/MCStructs-snbt/src/test/java/com/viaversion/viaversion/libs/mcstructs/snbt/impl/v1_21_5/SNbtDeserializer_v1_21_5Test.java
@@ -839,10 +869,10 @@ index 67df226..cf03f09 100644
      @Override
      public TextComponent shallowCopy() {
 diff --git a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
-index 138561f..1ef7220 100644
+index 4725db6..aec8181 100644
 --- a/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
 +++ b/MCStructs-text/src/main/java/com/viaversion/viaversion/libs/mcstructs/text/serializer/TextComponentSerializer.java
-@@ -44,7 +44,29 @@ import java.util.function.Supplier;
+@@ -42,7 +42,29 @@ import java.util.function.Supplier;
   * The text component serializer and deserializer wrapper class.<br>
   * Use the static default fields for a specific minecraft version or create your own serializer/deserializer.
   */
